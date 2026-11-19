@@ -1,7 +1,7 @@
 # Independent Reviewer Report — `ai-gig-platform`
 
 **Repo:** [`ankittomar9/ai-gig-platform`](https://github.com/ankittomar9/ai-gig-platform) — "AI Gig Hunter & Interview Simulator OS"
-**Audited commit:** `983081e` (branch `main`, 9 commits, 38 tracked files, ~6,641 lines)
+**Audited commit:** `983081e` — identical tree now at `ae7d2b51` on `main` (38 tracked files, ~6,641 lines). The repo's history was rewritten (force-push, same content, new SHAs) after this audit; every file:line reference below has been verified against the current tree.
 **Work runner being audited:** Gemini 3.8 (the autonomous agent that produced this repository)
 **Review date:** 2026-11-20
 **Review type:** Full audit — architecture, code quality, security, Docker, docs — judged against **professional engineering standards** ("would a senior engineer ship this?")
@@ -41,7 +41,7 @@ This is an evidence-first review. I did not only read the code — I ran it:
 5. Verified specific bug hypotheses with targeted requests: settings model-reset, invalid-API-key behavior, path traversal on resume upload, India-gate city coverage, resume PII hardcoding.
 6. Cross-checked every claim in `README.md`, `AGENTS.md`, and `collab/*` against the actual code and runtime behavior.
 
-Raw command outputs are preserved in **Appendix B**. All line references are to commit `983081e`.
+Raw command outputs are preserved in **Appendix B**. All line references are to the audited tree `983081e`, which is byte-identical to the current `main`.
 
 ---
 
@@ -117,7 +117,7 @@ Severity: **P0** = blocks the owner's stated goal or is unsafe · **P1** = mater
 
 **F3. Personal data committed to a public repository.**
 Real phone number, email, LinkedIn, city, employer (Cognizant/Macy's), dates, and full career history in `collab/data_export.json:945`, `collab/DATABASE_SNAPSHOT.md:108`, `collab/VERIFIED_DOSSIER_SAMPLES.md:79,181,283,385,487`, plus `resume_generator.py:70-71` (hardcoded into every generated resume) and `:16` (default name). README §Security claims "Strict .gitignore … prevent leaking" — the .db is indeed excluded, but the collab suite committed the same data in JSON/Markdown form.
-*Fix:* purge the PII from all files, add `collab/data_export.json` to `.gitignore`, make email/phone/LinkedIn profile fields (`UserProfile`), and rewrite Git history (the data is in commit `983081e` regardless of future deletion).
+*Fix:* purge the PII from all files, add `collab/data_export.json` to `.gitignore`, make email/phone/LinkedIn profile fields (`UserProfile`), and rewrite Git history (the data is present in the current `main` lineage at `ae7d2b51` regardless of future file deletion — and note the history has already been rewritten once without removing it).
 
 **F4. Docker deployment broken — and the self-review certifies it as passing.**
 `Dockerfile:23` `COPY data/ ./data/` fails on any fresh clone (directory not in Git). `docker-compose.yml:15-16` `env_file: .env` fails when `.env` is absent (fresh clone). Two independent blockers, yet `collab/REVIEW_CHECKLIST.md` row 8 marks "build cleanly" as ✅ PASSED.
