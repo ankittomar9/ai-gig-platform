@@ -1,19 +1,13 @@
 import re
 from typing import Tuple, Dict, Any
 
-def parse_compensation(text: str, default_tier: str = "Mid-Tier ($15-$30)") -> Dict[str, Any]:
+def parse_compensation(text: str, default_tier: str = "Unspecified") -> Dict[str, Any]:
     """
-    Parses compensation from text or applies intelligent heuristics.
-    Returns {
-        "compensation": "$25 - $40/hr",
-        "comp_min": 25.0,
-        "comp_max": 40.0,
-        "comp_unit": "hr",
-        "tier": "Expert ($30-$100+)"
-    }
+    Parses compensation from text.
+    If no real compensation numbers are present, returns 'Not listed'.
     """
     if not text:
-        return _fallback_tier(default_tier)
+        return _unlisted_comp(default_tier)
 
     # Search for hourly patterns like $25/hr, $25 - $50/hour, $30 to $45 an hour
     hourly_range = re.search(r'\$\s*(\d+(?:\.\d{1,2})?)\s*(?:-|to|–)\s*\$?\s*(\d+(?:\.\d{1,2})?)\s*(?:/(?:hr|hour)|per\s*hour|an\s*hour)', text, re.I)
@@ -58,7 +52,7 @@ def parse_compensation(text: str, default_tier: str = "Mid-Tier ($15-$30)") -> D
             "tier": tier
         }
 
-    return _fallback_tier(default_tier)
+    return _unlisted_comp(default_tier)
 
 def _format_comp(min_v: float, max_v: float, unit: str) -> Dict[str, Any]:
     if max_v >= 30 or min_v >= 30:
@@ -77,13 +71,14 @@ def _format_comp(min_v: float, max_v: float, unit: str) -> Dict[str, Any]:
         "tier": tier
     }
 
-def _fallback_tier(tier: str) -> Dict[str, Any]:
-    if "Microtask" in tier:
-        return {"compensation": "$5 - $15/hr", "comp_min": 5.0, "comp_max": 15.0, "comp_unit": "hr", "tier": "Microtask ($2-$15)"}
-    elif "Expert" in tier:
-        return {"compensation": "$35 - $75+/hr", "comp_min": 35.0, "comp_max": 75.0, "comp_unit": "hr", "tier": "Expert ($30-$100+)"}
-    else:
-        return {"compensation": "$18 - $30/hr", "comp_min": 18.0, "comp_max": 30.0, "comp_unit": "hr", "tier": "Mid-Tier ($15-$30)"}
+def _unlisted_comp(tier: str = "Unspecified") -> Dict[str, Any]:
+    return {
+        "compensation": "Not listed",
+        "comp_min": 0.0,
+        "comp_max": 0.0,
+        "comp_unit": "hr",
+        "tier": "Pay Not Listed"
+    }
 
 def detect_category(title: str, description: str = "") -> str:
     content = f"{title} {description}".lower()

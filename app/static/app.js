@@ -78,11 +78,12 @@ function renderJobs(jobs) {
     container.innerHTML = jobs.map(job => {
         // Tier color
         let tierColor = 'bg-slate-800 text-slate-300 border-slate-700';
-        if (job.tier.includes('Microtask')) {
+        const tierStr = job.tier || '';
+        if (tierStr.includes('Microtask')) {
             tierColor = 'bg-emerald-950/70 text-emerald-300 border-emerald-800/80';
-        } else if (job.tier.includes('Mid-Tier')) {
+        } else if (tierStr.includes('Mid-Tier')) {
             tierColor = 'bg-blue-950/70 text-blue-300 border-blue-800/80';
-        } else if (job.tier.includes('Expert')) {
+        } else if (tierStr.includes('Expert')) {
             tierColor = 'bg-purple-950/70 text-purple-300 border-purple-800/80';
         }
 
