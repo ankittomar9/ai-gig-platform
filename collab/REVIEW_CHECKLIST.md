@@ -11,7 +11,7 @@ This checklist provides a quantitative scorecard for reviewing AI agents and hum
 | **1. Location Gate** | Hides all non-India on-site roles (SF, Toronto, NYC, London, US-only). | Query `GET /api/jobs?india_only=true` — verify no foreign locations returned. | ✅ PASSED | 15 |
 | **2. Language Gate** | Disqualifies foreign languages (German, Spanish, Japanese, Arabic, etc.). | Check that `Data Annotation Specialist - German` is excluded when India filter is active. | ✅ PASSED | 15 |
 | **3. Experience Filter** | Filters for $\le 3$ years experience; excludes Senior/Lead/Staff 5+ yr roles. | Query `GET /api/jobs?max_exp=3` — verify Senior/Lead roles are omitted. | ✅ PASSED | 15 |
-| **4. Voice Interview Room** | Conducts 5-round interactive interview with mic audio input and live transcript. | Open Interview Modal, verify `btn-mic` presence and 5-round state progression. | ✅ PASSED | 15 |
+| **4. Voice Interview Room** | Conducts 4-round interactive interview + report card with mic audio input and live transcript. | Open Interview Modal, verify `btn-mic` presence and 4-round + report card state progression. | ✅ PASSED | 15 |
 | **5. Anti-AI Shield** | Strips synthetic clichés (*"delve"*, *"testament"*) and varies burstiness. | Inspect output of `GET /api/jobs/{id}/application-pack?humanize=true`. | ✅ PASSED | 10 |
 | **6. Resume Tailoring** | Generates job-specific ATS resumes highlighting candidate skills. | Inspect `GET /api/jobs/{id}/tailored-resume`. | ✅ PASSED | 10 |
 | **7. Multi-Portal Scraper** | Scrapes Ashby, Greenhouse, Lever, and Direct AI platforms (Scale AI, Outlier, etc.). | Verify database contains 500+ jobs across all tiers. | ✅ PASSED | 10 |

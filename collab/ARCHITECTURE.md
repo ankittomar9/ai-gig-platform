@@ -12,7 +12,7 @@ The application is structured as a unified Python FastAPI backend powering an in
 +---------------------------------------------------------------------------------+
 |                                Frontend Dashboard                               |
 |   - Real-time Job Grid with Dynamic Badges (India, Exp, Compensation, Match)    |
-|   - 5-Round Voice Interview Room with Whisper Speech-to-Text Input              |
+|   - 4-Round Voice Interview Room with Whisper Speech-to-Text & Report Card      |
 |   - Resume Persona Vault & 1-Click Tailored ATS Generator                       |
 |   - Filter Controls: Location Gate (India), Exp (<=3y), Company, Tier, Domain   |
 +---------------------------------------------------------------------------------+
@@ -111,7 +111,7 @@ Stores multiple specialized candidate profiles:
 - `POST /api/scan`: Triggers asynchronous scan across all scrapers.
 - `GET /api/jobs/{id}/tailored-resume`: Produces ATS resume tailored for the selected job with Anti-AI detector burstiness.
 - `GET /api/jobs/{id}/interview-packet`: Generates role-specific dossier with predicted questions, winning answers, and rubric criteria.
-- `POST /api/interview/start`: Initializes a new 5-round interactive interview session.
+- `POST /api/interview/start`: Initializes a new 4-round interactive interview session (plus final report card).
 - `POST /api/interview/chat`: Processes candidate spoken/written response and advances the interview state machine.
 - `GET /api/whisper-status`: Reports health status of local Whisper and Groq STT engines.
 - `POST /api/transcribe`: Accepts audio recording upload and returns transcribed text.

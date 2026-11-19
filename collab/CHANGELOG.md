@@ -46,8 +46,8 @@ All notable updates, fixes, and feature additions to the **AI Gig Hunter & Inter
 ## [1.1.0] — 2026-11-19
 
 ### Added
-- **Interactive 5-Round AI Interview Simulator:**
-  - Added `app/services/interview_agent.py` supporting 5 rounds (Screening, Technical Logic, RLHF, Red-Teaming, Report Card).
+- **Interactive 4-Round AI Interview Simulator (with Final Report Card):**
+  - Added `app/services/interview_agent.py` supporting 4 interview rounds (Screening, Technical Logic, RLHF, Red-Teaming) plus final report card.
   - Integrated Whisper speech-to-text with microphone recording button in modal.
   - Added honest frontier model rubric scoring using `gemini-3.8-flash`.
 - **Anti-AI Detector Shield:**

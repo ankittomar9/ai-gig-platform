@@ -226,7 +226,7 @@ async function triggerScan() {
 
     btn.disabled = true;
     icon.classList.add('animate-spin');
-    text.textContent = 'Scanning 40+ Portals...';
+    text.textContent = 'Scanning ATS Boards & Direct Portals...';
 
     try {
         const res = await fetch('/api/scan', { method: 'POST' });
