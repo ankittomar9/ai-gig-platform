@@ -566,10 +566,10 @@ function renderInterviewState() {
         scoreBadge.classList.remove('hidden');
         if (isOffline) {
             scoreBadge.className = 'font-semibold text-amber-400 bg-amber-950/60 border border-amber-800 px-2.5 py-0.5 rounded-full text-xs';
-            scoreBadge.innerHTML = `Score: <span id="overall-score-val">${currentSession.overall_score}</span>/100 <span class="text-[10px] opacity-80">(Offline Heuristic)</span>`;
+            scoreBadge.innerHTML = `Score: <span id="overall-score-val">${currentSession.overall_score != null ? `${currentSession.overall_score}/100` : '—'}</span> <span class="text-[10px] opacity-80">(Offline Heuristic)</span>`;
         } else {
             scoreBadge.className = 'font-semibold text-emerald-400 bg-emerald-950/60 border border-emerald-800 px-2.5 py-0.5 rounded-full text-xs';
-            scoreBadge.innerHTML = `Score: <span id="overall-score-val">${currentSession.overall_score}</span>/100 <span class="text-[10px] opacity-80">(Frontier AI)</span>`;
+            scoreBadge.innerHTML = `Score: <span id="overall-score-val">${currentSession.overall_score != null ? `${currentSession.overall_score}/100` : '—'}</span> <span class="text-[10px] opacity-80">(Frontier AI)</span>`;
         }
     } else {
         document.getElementById('interview-score-badge').classList.add('hidden');
@@ -583,14 +583,14 @@ function renderInterviewState() {
         <div class="flex flex-col ${isAi ? 'items-start' : 'items-end'} space-y-1">
             <span class="text-[10px] text-slate-500 font-semibold px-1">${isAi ? `${currentSession.company} Interviewer` : 'You (Candidate)'}</span>
             <div class="max-w-[85%] rounded-2xl p-4 text-xs leading-relaxed ${isAi ? 'bg-slate-900 border border-slate-800 text-slate-200' : 'bg-indigo-600 text-white shadow-md'}">
-                <div class="whitespace-pre-line">${escapeHtml(m.message)}</div>
+                <div class="whitespace-pre-line">${renderSafeMarkdown(m.message)}</div>
 
                 ${m.feedback ? `
                 <div class="mt-3 pt-2.5 border-t border-slate-800/80 text-[11px] text-indigo-300 bg-slate-950/60 p-2.5 rounded-xl">
                     <div class="flex items-center justify-between mb-1">
                         <div class="flex items-center space-x-1 font-semibold">
                             <i data-lucide="award" class="w-3.5 h-3.5 text-amber-400"></i>
-                            <span>Round Score: ${m.score != null ? m.score : '—'}/10</span>
+                            <span>Round Score: ${m.score != null ? `${m.score}/10` : '—'}</span>
                         </div>
                         ${m.evaluation_source === 'gemini'
                             ? `<span class="text-[10px] px-2 py-0.5 rounded bg-emerald-950 text-emerald-400 border border-emerald-800 font-medium">Frontier AI Scored</span>`
@@ -599,7 +599,7 @@ function renderInterviewState() {
                             : ''
                         }
                     </div>
-                    <div>${escapeHtml(m.feedback)}</div>
+                    <div>${renderSafeMarkdown(m.feedback)}</div>
                 </div>` : ''}
             </div>
         </div>
@@ -614,7 +614,7 @@ function renderInterviewState() {
     if (lastAiMsg && lastAiMsg.suggested_answer) {
         document.getElementById('hint-box').innerHTML = `
             <strong>Rubric & Ideal Answer:</strong><br>
-            ${escapeHtml(lastAiMsg.suggested_answer)}
+            ${renderSafeMarkdown(lastAiMsg.suggested_answer)}
         `;
     }
 }
@@ -856,6 +856,31 @@ function escapeHtml(str) {
         .replace(/>/g, "&gt;")
         .replace(/"/g, "&quot;")
         .replace(/'/g, "&#039;");
+}
+
+function renderSafeMarkdown(str) {
+    if (!str) return '';
+    // Always escape HTML first to prevent XSS injection
+    let text = escapeHtml(str);
+
+    // Headings: ### Header or ## Header or # Header
+    text = text.replace(/^### (.*$)/gim, '<h4 class="font-bold text-slate-100 text-sm mt-2 mb-1">$1</h4>');
+    text = text.replace(/^## (.*$)/gim, '<h3 class="font-bold text-slate-100 text-base mt-2 mb-1">$1</h3>');
+    text = text.replace(/^# (.*$)/gim, '<h2 class="font-bold text-white text-lg mt-2 mb-1">$1</h2>');
+
+    // Horizontal Rule
+    text = text.replace(/^---$/gim, '<hr class="my-2 border-slate-700/80">');
+
+    // Bold: **text**
+    text = text.replace(/\*\*(.*?)\*\*/g, '<strong class="font-semibold text-white">$1</strong>');
+
+    // Italics: *text*
+    text = text.replace(/(?<!\*)\*(?!\*)(.*?)(?<!\*)\*(?!\*)/g, '<em class="text-slate-300">$1</em>');
+
+    // Bullets: lines starting with • or - or *
+    text = text.replace(/^[•\-\*]\s+(.*$)/gim, '<div class="flex items-start space-x-1.5 ml-2 my-0.5"><span class="text-indigo-400">•</span><span>$1</span></div>');
+
+    return text;
 }
 
 // --- VOICE & WHISPER RECOGNITION CONTROLLER ---

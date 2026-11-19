@@ -434,7 +434,7 @@ def save_interview_session(session: Dict[str, Any]):
         session["session_id"], session["job_id"], session["company"], session["role_title"],
         session.get("current_round", 1), session.get("total_rounds", 4),
         session.get("round_name", "Screening"), int(session.get("is_completed", False)),
-        session.get("overall_score", 0), session.get("feedback_summary", ""),
+        session.get("overall_score"), session.get("feedback_summary", ""),
         json.dumps(session.get("messages", [])), datetime.now().isoformat()
     ))
     conn.commit()

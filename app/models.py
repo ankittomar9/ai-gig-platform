@@ -61,7 +61,7 @@ class InterviewSession(BaseModel):
     total_rounds: int = 4
     round_name: str = "Screening & Background"
     is_completed: bool = False
-    overall_score: int = 0
+    overall_score: Optional[int] = None
     feedback_summary: str = ""
     messages: List[InterviewMessage] = []
 

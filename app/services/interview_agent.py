@@ -75,7 +75,7 @@ async def start_new_interview(job_id: str) -> Dict[str, Any]:
         "total_rounds": 4,
         "round_name": ROUND_NAMES[1],
         "is_completed": False,
-        "overall_score": 0,
+        "overall_score": None,
         "feedback_summary": "In progress",
         "is_offline_fallback": False,
         "messages": [initial_message]
@@ -141,7 +141,7 @@ async def process_interview_reply(session_id: str, user_reply: str) -> Dict[str,
         session["round_name"] = ROUND_NAMES[5]
         # Calculate overall score
         scores = [m.get("score") for m in session["messages"] if m.get("score") is not None]
-        avg_score = int(sum(scores) / len(scores) * 10) if scores else 0
+        avg_score = int(sum(scores) / len(scores) * 10) if scores else None
         session["overall_score"] = avg_score
 
         any_heuristic = any(m.get("evaluation_source") == "heuristic" for m in session["messages"])
