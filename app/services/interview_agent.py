@@ -105,11 +105,13 @@ async def process_interview_reply(session_id: str, user_reply: str) -> Dict[str,
 
     # Check if Gemini API key is configured
     settings = get_settings()
-    api_key = settings.get("gemini_api_key", "").strip()
+    import os
+    api_key = settings.get("gemini_api_key", "").strip() or os.getenv("GEMINI_API_KEY", "").strip()
     offline_mode = settings.get("offline_mode", "false").lower() == "true" or not api_key
 
     if not offline_mode and api_key:
-        ai_response = await _call_gemini_interview(job, session, user_reply, api_key, settings.get("gemini_model", "gemini-2.5-flash"))
+        model_name = settings.get("gemini_model") or os.getenv("GEMINI_MODEL") or "gemini-2.5-flash"
+        ai_response = await _call_gemini_interview(job, session, user_reply, api_key, model_name)
     else:
         ai_response = _evaluate_offline_round(curr_round, user_reply, company, role_title)
 
@@ -180,24 +182,42 @@ async def _call_gemini_interview(job: Dict[str, Any], session: Dict[str, Any], u
     company = session["company"]
     role_title = session["role_title"]
 
-    prompt = f"""You are the strict, professional Lead AI Interviewer at {company} screening a candidate for {role_title}.
+    prompt = f"""You are the Lead Technical Interviewer and Senior Assessment Evaluator at {company} screening a candidate for {role_title}.
 Currently in Round {curr_round} of 4: {ROUND_NAMES.get(curr_round)}.
 
-The candidate just said:
+The candidate just replied:
 "{user_reply}"
 
-Instructions:
-1. Score their answer from 1 to 10 based on clarity, technical rigor, and RLHF/dataset evaluation standards.
-2. Provide concise constructive feedback (strengths and red flags).
-3. If curr_round < 4, formulate the next challenging question for Round {curr_round + 1}.
-4. If curr_round == 4, provide a final assessment debrief and pass/fail verdict.
-5. Provide a short "Top 1% Sample Answer".
+EVALUATION MANDATE:
+Do not sugar-coat. Provide an HONEST, rigorous, objective assessment based on frontier AI evaluation standards.
+Evaluate against this 3-part rubric:
+1. Instruction & Question Adherence (Did they directly answer what was asked without dodging? 0-3 pts)
+2. Technical Depth & Precision (Are their examples concrete, accurate, and relevant to {company}? 0-4 pts)
+3. Clarity, Tone & Ownership (Is communication crisp, structured, and free of vague filler? 0-3 pts)
 
-Format your response as valid JSON with keys:
+Calculate the honest score from 1 to 10 (Total of rubric points above).
+
+If curr_round < 4:
+Formulate the next challenging, authentic question for Round {curr_round + 1}: {ROUND_NAMES.get(curr_round + 1)}.
+The question MUST be tailored to {company}'s actual tech stack, dataset benchmarks, and what the candidate just answered.
+
+If curr_round == 4:
+Provide a comprehensive final certification debrief, stating whether this candidate would pass {company}'s real assessment and why.
+
+Output MUST be valid JSON with keys:
 "score": (int from 1 to 10),
-"feedback": (string),
-"message": (string containing your feedback and next question formatted nicely in markdown),
-"suggested_answer": (string)
+"feedback": (string summarizing strengths and exact red flags/weaknesses),
+"message": (string formatted in clean Markdown with:
+  "### Interviewer Evaluation (Score: X/10)",
+  "**Rubric Assessment:**",
+  "• Instruction Following: ...",
+  "• Technical Depth: ...",
+  "• Areas to Improve / Red Flags: ...",
+  "---",
+  "### Next Question (Round N):",
+  "<Next question here>"
+),
+"suggested_answer": (string with a grounded A+ response that would get 10/10)
 """
 
     payload = {
