@@ -69,9 +69,9 @@ class InterviewChatRequest(BaseModel):
 
 class SettingsUpdate(BaseModel):
     gemini_api_key: Optional[str] = None
-    gemini_model: Optional[str] = "gemini-2.5-flash"
-    offline_mode: Optional[bool] = False
-    minimum_rate: Optional[float] = 0.0
+    gemini_model: Optional[str] = None
+    offline_mode: Optional[bool] = None
+    minimum_rate: Optional[float] = None
 
 class JobStatusUpdate(BaseModel):
     status: str
