@@ -37,7 +37,7 @@ The candidate has ~2-3 years of software engineering experience in Java, Spring 
 
 ---
 
-## Feature 3: Voice-Enabled 5-Round AI Interview Simulator
+## Feature 3: Voice-Enabled 4-Round AI Interview Simulator (with Final Report Card)
 
 ### Problem Statement
 AI training and RLHF platforms (e.g. Mercor, Alignerr, Scale AI, Cohere, Micro1) require rigorous screening interviews and video assessments that cannot be passed through simple memorization. Candidates need to practice speaking their answers 2-5 times to develop natural rhythm, confidence, and rubric compliance.
@@ -64,7 +64,7 @@ Job application tracking systems and AI gig screeners run resumes and answers th
 
 ### Implementation Mechanism
 - Implemented in `app/services/humanizer.py`.
-- **Cliché Stripper:** Regex engine replacing 40+ synthetic AI clichés with practical engineering language.
+- **Cliché Stripper:** Regex engine replacing common synthetic AI clichés with practical engineering language.
 - **Burstiness Engine:** Injects authentic sentence length variation (alternating 6-word punchy statements with 20-word explanatory paragraphs).
 - **First-Person Production Anecdotes:** Frames answers around real-world production challenges (database index contention, thread pool saturation, latency spike triage).
 

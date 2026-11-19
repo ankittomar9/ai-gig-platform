@@ -1,8 +1,8 @@
 # AI Gig Hunter & Interview Simulator OS ⚡
 
-A unified, full-stack platform built with **Python FastAPI** that continuously tracks, aggregates, and filters AI data annotation, RLHF, prompt engineering, and domain evaluation contracts across **40+ platforms** (including Ashby, Greenhouse, Lever, and direct portals).
+A unified, full-stack platform built with **Python FastAPI** that aggregates and filters AI data annotation, RLHF, prompt engineering, and domain evaluation contracts across **8 live ATS boards** (including Ashby, Greenhouse, Lever) plus **19 curated direct platform listings** (~12–19 distinct AI evaluation brands, with on-demand and initial-scan fetching).
 
-Equipped with a **Location & Language Eligibility Gate (India Shield)**, **Experience Normalizer ($\le 3$ Years)**, **1-Click Application Pack Generator**, **Anti-AI Detector Shield**, **Docker Containerization**, and an **Interactive 5-Round Voice AI Interview Simulator**.
+Equipped with a **Location & Language Eligibility Gate (India Shield)**, **Experience Normalizer ($\le 3$ Years)**, **1-Click Application Pack Generator**, **Anti-AI Detector Shield**, **Docker Containerization**, and an **Interactive 4-Round Voice AI Interview Simulator (with Final Quantitative Report Card)**.
 
 ---
 
@@ -25,19 +25,19 @@ Equipped with a **Location & Language Eligibility Gate (India Shield)**, **Exper
 - **Lever ATS:** Appen.
 - **Direct Contributor Platforms:** Alignerr (Labelbox), DataAnnotation.tech, Micro1, Mindrift (Toloka), Clickworker/UHRS, Prolific, Telus International AI, OneForma.
 
-### 4. 🎙️ Interactive 5-Round Voice AI Interview Simulator
+### 4. 🎙️ Interactive 4-Round Voice AI Interview Simulator (with Final Report Card)
 - **Voice STT Input:** In-browser streaming Speech-to-Text (`webkitSpeechRecognition`) with MediaRecorder fallbacks to local Whisper sidecars (`http://localhost:8178`) and Groq Cloud Whisper.
-- **5 Structured Rounds:**
+- **4 Structured Rounds + Final Evaluation:**
   1. *Background & Technical Screening*
   2. *Domain Logic & Algorithmic Code Review*
   3. *RLHF & Pairwise Model Output Ranking*
   4. *Adversarial Red-Teaming, Jailbreaks & Safety*
-  5. *Final Quantitative Report Card & Rubric Evaluation*
+  - *Final Quantitative Report Card & Rubric Evaluation*
 - **Frontier AI Scoring:** Evaluated by Google's `gemini-3.8-flash` for honest, non-sycophantic scoring.
 
 ### 5. 🛡️ Anti-AI Detector Shield
 - Humanizes application answers and generated resumes to bypass AI detectors (GPTZero, Turnitin, CopyLeaks).
-- Replaces 40+ synthetic AI clichés (*"delve"*, *"testament"*, *"beacon"*, *"multifaceted"*, *"pivotal"*) with authentic developer language.
+- Replaces common synthetic AI clichés (*"delve"*, *"testament"*, *"beacon"*, *"multifaceted"*, *"pivotal"*) with authentic developer language.
 - Enforces natural burstiness (varying sentence lengths) and anchors claims in real-world production engineering anecdotes.
 
 ### 6. 📁 Multi-Persona Resume Vault & 1-Click Tailored ATS Resumes
@@ -79,12 +79,12 @@ run.bat
 ### Option 2: Manual PowerShell Launch
 ```powershell
 # 1. Activate Virtual Environment
-cd D:\ai-gig-platform
+cd ai-gig-platform
 .\venv\Scripts\activate
 
 # 2. Start FastAPI Server
 $env:PYTHONPATH="."
-uvicorn app.main:app --host 127.0.0.1 --port 8000 --reload --reload-dir "app"
+uvicorn app.main:app --host 127.0.0.1 --port 8000
 ```
 Open [http://localhost:8000](http://localhost:8000) in your browser.
 

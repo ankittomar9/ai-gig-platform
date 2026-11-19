@@ -69,7 +69,7 @@ The platform operates an ecosystem of specialized agents designed to automate di
 
 ---
 
-### Agent 4: The 5-Round Interactive AI Interviewer Agent
+### Agent 4: The 4-Round Interactive AI Interviewer Agent (with Final Report Card)
 - **Module:** `app/services/interview_agent.py`
 - **Role:** Conducts real-time, voice-enabled, multi-round technical and alignment interviews tailored to the specific company (Cohere, Scale AI, Mercor, Turing, Alignerr, etc.) and role.
 - **Round State Machine:**
@@ -107,7 +107,7 @@ The platform operates an ecosystem of specialized agents designed to automate di
 1. **Multi-ATS Integration:** Built parallel crawlers for Ashby, Greenhouse, Lever, and Direct AI platforms (Scale AI, Outlier, Alignerr, Mercor, Cohere, Surge AI, Turing, Invisible Technologies, DataAnnotation, Appen, etc.) indexing 521+ live listings.
 2. **India Location Gate:** Implemented regex and metadata filtering that eliminates all location-ineligible (San Francisco, Toronto, NYC, London, US-only) and language-ineligible (German, Spanish, French, Japanese, Arabic) jobs.
 3. **Experience Matcher:** Created automated experience parser that tags Senior/Lead 5+ year roles and defaults dashboard to `🎯 Fits My Resume (≤ 3 Years)` (30-35 highly-eligible positions).
-4. **Voice-Enabled Interview Simulator:** Built a 5-round stateful interview engine with voice recording, live transcription, hint rubrics, and comprehensive final report cards.
+4. **Voice-Enabled Interview Simulator:** Built a 4-round stateful interview engine with voice recording, live transcription, hint rubrics, and comprehensive final report cards.
 5. **Anti-AI Detector Shield:** Developed text burstiness reformatter and cliché stripper to ensure application answers and resumes score 0% on AI detection benchmarks.
 6. **Dockerization:** Packaged the entire stack into a containerized `Dockerfile` with `docker-compose.yml`, healthchecks, and SQLite volume persistence.
 7. **Collab Multi-Agent Review Suite:** Created the `collab/` directory containing architecture blueprints, feature dossiers, changelogs, and review rubrics for external AI agent evaluation.
