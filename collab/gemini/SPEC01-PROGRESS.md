@@ -14,7 +14,7 @@
 | WO-4 | Fix Docker build & compose (F4) | VERIFIED | `docker/fresh-clone-build-fix` | `fcb11d8` | `collab/gemini/SPEC01-WO-4-REPORT.md` |
 | WO-5 | Purge personal data from working tree (F3) | VERIFIED | `privacy/pii-purge-fix` | `7f1027a` | `collab/gemini/SPEC01-WO-5-REPORT.md` |
 | WO-6 | Align model story across docs & code (F6) | VERIFIED | `docs/model-story-alignment-fix` | `cd4c549` | `collab/gemini/SPEC01-WO-6-REPORT.md` |
-| WO-7 | Fix India gate city coverage & fallback (F7) | QUEUED | `scraper/india-gate-coverage-fix` | - | `collab/gemini/SPEC01-WO-7-REPORT.md` |
+| WO-7 | Fix India gate city coverage & fallback (F7) | VERIFIED | `scraper/india-gate-coverage-fix` | `8b61555` | `collab/gemini/SPEC01-WO-7-REPORT.md` |
 | WO-8 | Harden resume upload & path traversal (F8, F14) | QUEUED | `matcher/upload-hardening-fix` | - | `collab/gemini/SPEC01-WO-8-REPORT.md` |
 | WO-9 | Stop inventing compensation (F10) | QUEUED | `scraper/compensation-honesty-fix` | - | `collab/gemini/SPEC01-WO-9-REPORT.md` |
 | WO-10 | Make docs & claims match reality (F9, F11, F22) | QUEUED | `docs/claims-truth-fix` | - | `collab/gemini/SPEC01-WO-10-REPORT.md` |
