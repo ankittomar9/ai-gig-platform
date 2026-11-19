@@ -21,6 +21,9 @@ When conducting an autonomous review of this platform, adhere to the following e
 
 ## Review Artifacts Index
 
+- [`collab/DATABASE_SNAPSHOT.md`](./DATABASE_SNAPSHOT.md) — Complete database census, registry table of all 35 India-eligible jobs, and schema snapshot.
+- [`collab/VERIFIED_DOSSIER_SAMPLES.md`](./VERIFIED_DOSSIER_SAMPLES.md) — Live generated samples of Role Dossiers, Anti-AI Application Packs, and Tailored Resumes for top India roles (Turing, Alignerr, Outlier, Scale AI, DataAnnotation).
+- [`collab/data_export.json`](./data_export.json) — Structured JSON export of all India-eligible positions, personas, and candidate profile data for programmatic AI parsing.
 - [`collab/ARCHITECTURE.md`](./ARCHITECTURE.md) — Technical blueprint, entity relationships, and service topology.
 - [`collab/FEATURE_DOSSIER.md`](./FEATURE_DOSSIER.md) — In-depth technical breakdown of each feature.
 - [`collab/REVIEW_CHECKLIST.md`](./REVIEW_CHECKLIST.md) — Quantitative grading criteria for external AI reviewers.
