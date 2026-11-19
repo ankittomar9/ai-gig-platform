@@ -208,27 +208,64 @@ async def _call_gemini_interview(job: Dict[str, Any], session: Dict[str, Any], u
     company = session["company"]
     role_title = session["role_title"]
 
-    prompt = f"""You are the Lead Technical Interviewer and Senior Assessment Evaluator at {company} screening a candidate for {role_title}.
-Currently in Round {curr_round} of 4: {ROUND_NAMES.get(curr_round)}.
+    jd_text = (job.get("description") or "Not provided")[:2000]
+    category = job.get("category") or "General AI Engineering"
+    tier = job.get("tier") or "Mid-Tier"
+    skills = job.get("skills") or ""
 
-The candidate just replied:
+    # Extract prior conversation history (last 4 message pairs)
+    history_msgs = session.get("messages", [])
+    prior_msgs = [m for m in history_msgs if m.get("message") != user_reply][-8:]
+    formatted_history = []
+    for m in prior_msgs:
+        speaker = f"{company} Interviewer" if m.get("sender") == "ai" else "Candidate"
+        formatted_history.append(f"{speaker} (Round {m.get('round_number', '?')}): {m.get('message')[:350]}")
+    history_text = "\n".join(formatted_history) if formatted_history else "No prior conversation turns."
+
+    if curr_round < 4:
+        round_objective = (
+            f"Formulate the next authentic, rigorous technical question for Round {curr_round + 1}: {ROUND_NAMES.get(curr_round + 1)}.\n"
+            f"CRITICAL: The question MUST specifically reference and test concepts from the Job Description and Required Skills below "
+            f"(e.g. frameworks, algorithmic challenges, rubric criteria, or failure modes relevant to {company}). "
+            f"It must also build logically upon what the candidate just answered."
+        )
+    else:
+        round_objective = (
+            f"Provide a comprehensive final certification debrief, explaining whether the candidate demonstrated "
+            f"the required depth for {role_title} at {company} according to the Job Description and frontier AI rubrics."
+        )
+
+    prompt = f"""You are the Lead Technical Interviewer and Senior Assessment Evaluator at {company} conducting a rigorous technical interview for:
+
+TARGET ROLE SPECIFICATION:
+- Role Title: {role_title}
+- Company: {company}
+- Domain Category: {category} (Tier: {tier})
+- Required Skills & Tech Stack: {skills}
+
+JOB DESCRIPTION EXCERPT:
+{jd_text}
+
+PRIOR CONVERSATION CONTEXT:
+{history_text}
+
+CURRENT ROUND:
+Round {curr_round} of 4: {ROUND_NAMES.get(curr_round)}
+
+CANDIDATE'S LATEST RESPONSE:
 "{user_reply}"
 
 EVALUATION MANDATE:
 Do not sugar-coat. Provide an HONEST, rigorous, objective assessment based on frontier AI evaluation standards.
 Evaluate against this 3-part rubric:
 1. Instruction & Question Adherence (Did they directly answer what was asked without dodging? 0-3 pts)
-2. Technical Depth & Precision (Are their examples concrete, accurate, and relevant to {company}? 0-4 pts)
+2. Technical Depth & Precision (Are their examples concrete, accurate, and relevant to {company}'s tech stack and the Job Description? 0-4 pts)
 3. Clarity, Tone & Ownership (Is communication crisp, structured, and free of vague filler? 0-3 pts)
 
 Calculate the honest score from 1 to 10 (Total of rubric points above).
 
-If curr_round < 4:
-Formulate the next challenging, authentic question for Round {curr_round + 1}: {ROUND_NAMES.get(curr_round + 1)}.
-The question MUST be tailored to {company}'s actual tech stack, dataset benchmarks, and what the candidate just answered.
-
-If curr_round == 4:
-Provide a comprehensive final certification debrief, stating whether this candidate would pass {company}'s real assessment and why.
+ROUND OBJECTIVE:
+{round_objective}
 
 Output MUST be valid JSON with keys:
 "score": (int from 1 to 10),
@@ -241,7 +278,7 @@ Output MUST be valid JSON with keys:
   "• Areas to Improve / Red Flags: ...",
   "---",
   "### Next Question (Round N):",
-  "<Next question here>"
+  "<Next question grounded in this specific job description and tech stack>"
 ),
 "suggested_answer": (string with a grounded A+ response that would get 10/10)
 """
