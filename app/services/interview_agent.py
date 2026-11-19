@@ -203,7 +203,11 @@ def _evaluate_offline_round(round_num: int, user_reply: str, company: str, role_
     }
 
 async def _call_gemini_interview(job: Dict[str, Any], session: Dict[str, Any], user_reply: str, api_key: str, model: str) -> Dict[str, Any]:
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={api_key}"
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
+    headers = {
+        "x-goog-api-key": api_key,
+        "Content-Type": "application/json"
+    }
     curr_round = session["current_round"]
     company = session["company"]
     role_title = session["role_title"]
@@ -293,7 +297,7 @@ Output MUST be valid JSON with keys:
 
     try:
         async with httpx.AsyncClient(timeout=20.0) as client:
-            resp = await client.post(url, json=payload)
+            resp = await client.post(url, headers=headers, json=payload)
             if resp.status_code != 200:
                 err_body = resp.text[:300]
                 logger.warning(f"Gemini API returned status {resp.status_code}: {err_body}")
