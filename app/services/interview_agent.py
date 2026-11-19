@@ -1,8 +1,11 @@
 import httpx
 import json
+import logging
 import uuid
 from typing import Dict, Any, List, Optional
 from app.database import get_job_by_id, get_settings, save_interview_session, get_interview_session
+
+logger = logging.getLogger("interview_agent")
 
 ROUND_NAMES = {
     1: "Round 1: Background & Communication Screening",
@@ -59,7 +62,8 @@ async def start_new_interview(job_id: str) -> Dict[str, Any]:
         "round_number": 1,
         "feedback": "Interview started. Please formulate a clear, detailed response.",
         "score": None,
-        "suggested_answer": scenario["suggested"]
+        "suggested_answer": scenario["suggested"],
+        "evaluation_source": None
     }
 
     session = {
@@ -73,6 +77,7 @@ async def start_new_interview(job_id: str) -> Dict[str, Any]:
         "is_completed": False,
         "overall_score": 0,
         "feedback_summary": "In progress",
+        "is_offline_fallback": False,
         "messages": [initial_message]
     }
 
@@ -99,7 +104,8 @@ async def process_interview_reply(session_id: str, user_reply: str) -> Dict[str,
         "round_number": curr_round,
         "feedback": None,
         "score": None,
-        "suggested_answer": None
+        "suggested_answer": None,
+        "evaluation_source": None
     }
     session["messages"].append(user_msg_record)
 
@@ -109,11 +115,19 @@ async def process_interview_reply(session_id: str, user_reply: str) -> Dict[str,
     api_key = settings.get("gemini_api_key", "").strip() or os.getenv("GEMINI_API_KEY", "").strip()
     offline_mode = settings.get("offline_mode", "false").lower() == "true" or not api_key
 
+    ai_response = None
     if not offline_mode and api_key:
         model_name = settings.get("gemini_model") or os.getenv("GEMINI_MODEL") or "gemini-2.5-flash"
-        ai_response = await _call_gemini_interview(job, session, user_reply, api_key, model_name)
+        try:
+            ai_response = await _call_gemini_interview(job, session, user_reply, api_key, model_name)
+            session["is_offline_fallback"] = False
+        except Exception as e:
+            logger.warning(f"Gemini API call failed ({e}). Falling back to offline heuristic scoring.")
+            ai_response = _evaluate_offline_round(curr_round, user_reply, company, role_title, fallback_reason=str(e))
+            session["is_offline_fallback"] = True
     else:
-        ai_response = _evaluate_offline_round(curr_round, user_reply, company, role_title)
+        ai_response = _evaluate_offline_round(curr_round, user_reply, company, role_title, fallback_reason="No API key configured or offline mode enabled")
+        session["is_offline_fallback"] = True
 
     # Append AI feedback and next question
     session["messages"].append(ai_response)
@@ -127,17 +141,27 @@ async def process_interview_reply(session_id: str, user_reply: str) -> Dict[str,
         session["round_name"] = ROUND_NAMES[5]
         # Calculate overall score
         scores = [m.get("score") for m in session["messages"] if m.get("score") is not None]
-        avg_score = int(sum(scores) / len(scores) * 10) if scores else 88
+        avg_score = int(sum(scores) / len(scores) * 10) if scores else 0
         session["overall_score"] = avg_score
-        session["feedback_summary"] = (
-            f"Candidate passed {company} interview simulation with {avg_score}/100! "
-            f"Demonstrated solid grasp of rubric guidelines, reasoning breakdown, and evaluation ethics."
-        )
+
+        any_heuristic = any(m.get("evaluation_source") == "heuristic" for m in session["messages"])
+        if any_heuristic or session.get("is_offline_fallback"):
+            session["is_offline_fallback"] = True
+            session["feedback_summary"] = (
+                f"[OFFLINE HEURISTIC EVALUATION] Candidate finished {company} interview simulation with {avg_score}/100. "
+                f"Note: Evaluated using offline rule-based heuristics, NOT frontier AI. "
+                f"Configure a valid Gemini API key to receive authentic rubric-based scoring."
+            )
+        else:
+            session["feedback_summary"] = (
+                f"Candidate completed {company} interview simulation with {avg_score}/100! "
+                f"Evaluated by Gemini against frontier AI rubric standards."
+            )
 
     save_interview_session(session)
     return session
 
-def _evaluate_offline_round(round_num: int, user_reply: str, company: str, role_title: str) -> Dict[str, Any]:
+def _evaluate_offline_round(round_num: int, user_reply: str, company: str, role_title: str, fallback_reason: str = "") -> Dict[str, Any]:
     reply_len = len(user_reply.split())
     # Heuristic scoring based on depth and completeness
     if reply_len < 15:
@@ -169,11 +193,13 @@ def _evaluate_offline_round(round_num: int, user_reply: str, company: str, role_
 
     return {
         "sender": "ai",
-        "message": f"**Interviewer Evaluation for Round {round_num}:**\nScore: {score}/10\n\n{critique}\n\n---\n\n{next_q}",
+        "message": f"**Interviewer Evaluation for Round {round_num} (Offline Heuristic):**\nScore: {score}/10\n\n{critique}\n\n---\n\n{next_q}",
         "round_number": round_num,
         "feedback": critique,
         "score": score,
-        "suggested_answer": suggested
+        "suggested_answer": suggested,
+        "evaluation_source": "heuristic",
+        "fallback_reason": fallback_reason
     }
 
 async def _call_gemini_interview(job: Dict[str, Any], session: Dict[str, Any], user_reply: str, api_key: str, model: str) -> Dict[str, Any]:
@@ -222,33 +248,39 @@ Output MUST be valid JSON with keys:
 
     payload = {
         "contents": [{"parts": [{"text": prompt}]}],
-        "generationConfig": {"temperature": 0.4}
+        "generationConfig": {
+            "temperature": 0.4,
+            "response_mime_type": "application/json"
+        }
     }
 
     try:
-        async with httpx.AsyncClient(timeout=15.0) as client:
+        async with httpx.AsyncClient(timeout=20.0) as client:
             resp = await client.post(url, json=payload)
-            if resp.status_code == 200:
-                data = resp.json()
-                text = data["candidates"][0]["content"]["parts"][0]["text"]
-                # Try parsing JSON from markdown codeblock if present
-                clean_text = text.strip()
-                if "```json" in clean_text:
-                    clean_text = clean_text.split("```json")[1].split("```")[0].strip()
-                elif "```" in clean_text:
-                    clean_text = clean_text.split("```")[1].split("```")[0].strip()
-                
-                parsed = json.loads(clean_text)
-                return {
-                    "sender": "ai",
-                    "message": parsed.get("message", text),
-                    "round_number": curr_round,
-                    "feedback": parsed.get("feedback", ""),
-                    "score": parsed.get("score", 8),
-                    "suggested_answer": parsed.get("suggested_answer", "")
-                }
-    except Exception as e:
-        # Fallback to offline evaluation if API call fails
-        pass
+            if resp.status_code != 200:
+                err_body = resp.text[:300]
+                logger.warning(f"Gemini API returned status {resp.status_code}: {err_body}")
+                raise RuntimeError(f"Gemini API HTTP {resp.status_code}: {err_body}")
 
-    return _evaluate_offline_round(curr_round, user_reply, company, role_title)
+            data = resp.json()
+            text = data["candidates"][0]["content"]["parts"][0]["text"]
+            # Try parsing JSON from markdown codeblock if present
+            clean_text = text.strip()
+            if "```json" in clean_text:
+                clean_text = clean_text.split("```json")[1].split("```")[0].strip()
+            elif "```" in clean_text:
+                clean_text = clean_text.split("```")[1].split("```")[0].strip()
+            
+            parsed = json.loads(clean_text)
+            return {
+                "sender": "ai",
+                "message": parsed.get("message", text),
+                "round_number": curr_round,
+                "feedback": parsed.get("feedback", ""),
+                "score": parsed.get("score"),
+                "suggested_answer": parsed.get("suggested_answer", ""),
+                "evaluation_source": "gemini"
+            }
+    except Exception as e:
+        logger.warning(f"Gemini API call failed: {e}")
+        raise
