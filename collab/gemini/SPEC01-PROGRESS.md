@@ -18,7 +18,7 @@
 | WO-8 | Harden resume upload & path traversal (F8, F14) | VERIFIED | `matcher/upload-hardening-fix` | `cbc0c5e` | `collab/gemini/SPEC01-WO-8-REPORT.md` |
 | WO-9 | Stop inventing compensation (F10) | VERIFIED | `scraper/compensation-honesty-fix` | `cfe880d` | `collab/gemini/SPEC01-WO-9-REPORT.md` |
 | WO-10 | Make docs & claims match reality (F9, F11, F22) | VERIFIED | `docs/claims-truth-fix` | `8a9a519` | `collab/gemini/SPEC01-WO-10-REPORT.md` |
-| WO-11 | Security polish: CORS & key header (F13, F15) | QUEUED | `security/cors-and-key-header-fix` | - | `collab/gemini/SPEC01-WO-11-REPORT.md` |
+| WO-11 | Security polish: CORS & key header (F13, F15) | VERIFIED | `security/cors-and-key-header-fix` | `a0caf8c` | `collab/gemini/SPEC01-WO-11-REPORT.md` |
 | WO-12 | Score & UI integrity (F12, F16) | QUEUED | `interview/score-integrity-fix` | - | `collab/gemini/SPEC01-WO-12-REPORT.md` |
 | WO-13 | Code cleanup, title cap, dependency pins (F18, F20, F21) | QUEUED | `cleanup/dead-code-and-pins-fix` | - | `collab/gemini/SPEC01-WO-13-REPORT.md` |
 | WO-14 | Minimal test suite (pytest) | QUEUED | `tests/minimal-suite-1` | - | `collab/gemini/SPEC01-WO-14-REPORT.md` |
