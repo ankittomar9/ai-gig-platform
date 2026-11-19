@@ -1,15 +1,36 @@
 # Fix Work Orders — Execution Brief for the Agent (Gemini / Antigravity)
 
-Companion to [REVIEWER_REPORT.md](REVIEWER_REPORT.md) (same folder). That document is the *evidence*; this one is the *task list*. Execute top to bottom.
+- **Task ID:** SPEC01 (execution tasks)
+- **Author:** Z.ai (Independent Reviewer)
+- **Date:** 2026-11-20
+- **Base Commit:** `afa012a8`
+- **Status:** DISPATCHED — binding per [SPEC01-REMEDIATION-SPEC.md](SPEC01-REMEDIATION-SPEC.md)
 
-## Ground rules (read first)
+Companion to [REVIEWER_REPORT.md](REVIEWER_REPORT.md) (same folder). The SPEC is the *contract*; that report is the *evidence*; this one is the *task list*. Execute top to bottom, P0 → P1 → P2.
 
-1. **Commit directly to `main`**, one work order per commit, message format `fix(WO-n): <summary>`.
+## Ground rules (read first — governance adopted from the GateLMS protocol)
+
+1. **Zero code changes on `main`.** Every work order runs on its own pre-assigned branch (table below), per `.agents/rules/branch-hygiene.md`: cut from latest `main`, commit atomically (`fix(wo-<n>): <summary>`), push the branch, then merge with `--no-ff` (`merge(wo-<n>): <summary>`). One work order per branch — never mix tasks.
 2. **Never force-push or rewrite history.** Two agents share this repo; a rewrite silently destroys the other's commits. (The history was already rewritten once — it cost nothing only by luck.)
 3. **Do not modify anything under `review/`** — that is the reviewer's evidence base.
 4. **Do not self-grade.** Every WO below has an *acceptance test*. Run it and paste the raw output as evidence. A WO without pasted evidence is NOT done — this repo's previous self-review marked a broken Docker build as "✅ PASSED", which is exactly the failure mode to avoid.
-5. Track status in a new `collab/FIX_PROGRESS.md` table: `WO | status | commit sha | acceptance evidence (pasted output)`.
-6. If a WO cannot be completed as written, record why in `FIX_PROGRESS.md` and move on. Do not improvise silently.
+5. Report per work order in `collab/gemini/SPEC01-WO-<n>-REPORT.md` and keep the ledger `collab/gemini/SPEC01-PROGRESS.md` updated: `WO | status | branch | commit sha | evidence pointer`.
+6. If a WO cannot be completed as written, record why in your report (`DEVIATION` section) and freeze that branch. Do not improvise silently.
+
+### Pre-assigned branch names
+
+| WO | Branch | WO | Branch |
+|---|---|---|---|
+| 1 | `interview/scoring-honesty-fix` | 9 | `scraper/compensation-honesty-fix` |
+| 2 | `interview/job-aware-prompts-fix` | 10 | `docs/claims-truth-fix` |
+| 3 | `settings/model-reset-fix` | 11 | `security/cors-and-key-header-fix` |
+| 4 | `docker/fresh-clone-build-fix` | 12 | `interview/score-integrity-fix` |
+| 5 | `privacy/pii-purge-fix` | 13 | `cleanup/dead-code-and-pins-fix` |
+| 6 | `docs/model-story-alignment-fix` | 14 | `tests/minimal-suite-1` |
+| 7 | `scraper/india-gate-coverage-fix` | 15 | `privacy/history-purge-1` *(Operator-gated)* |
+| 8 | `matcher/upload-hardening-fix` | | |
+
+Fixups to a WO already merged: same domain, `<slug>-fixup-<N>` with the next sequential integer.
 
 ---
 
@@ -116,4 +137,4 @@ Git **history rewrite** to purge the PII from all historical commits (the data e
 
 ## Definition of done for this pass
 
-All P0 (WO-1…5) and P1 (WO-6…10) green **with pasted acceptance evidence** in `collab/FIX_PROGRESS.md`. Then request a re-review: the reviewer will re-run the acceptance tests independently and update `REVIEWER_REPORT.md` with a verdict delta.
+All P0 (WO-1…5) and P1 (WO-6…10) gates verified green **by Z.ai re-audit with reproduced receipts** (not executor self-report), per SPEC01 §3 and §6. Then the reviewer re-runs the acceptance tests independently and updates `REVIEWER_REPORT.md` with a verdict delta.
