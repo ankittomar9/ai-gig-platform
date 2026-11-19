@@ -427,6 +427,7 @@ def get_interview_session(session_id: str) -> Optional[Dict[str, Any]]:
     d = dict(row)
     d["messages"] = json.loads(d["history"]) if d["history"] else []
     d["is_completed"] = bool(d["is_completed"])
+    d["is_offline_fallback"] = any(m.get("evaluation_source") == "heuristic" for m in d["messages"])
     return d
 
 def get_all_personas() -> List[Dict[str, Any]]:

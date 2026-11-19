@@ -550,10 +550,26 @@ function renderInterviewState() {
         }
     }
 
+    const isOffline = currentSession.is_offline_fallback || currentSession.messages.some(m => m.evaluation_source === 'heuristic');
+    const offlineBanner = document.getElementById('interview-offline-banner');
+    if (offlineBanner) {
+        if (isOffline) {
+            offlineBanner.classList.remove('hidden');
+        } else {
+            offlineBanner.classList.add('hidden');
+        }
+    }
+
     if (currentSession.is_completed) {
         const scoreBadge = document.getElementById('interview-score-badge');
         scoreBadge.classList.remove('hidden');
-        document.getElementById('overall-score-val').textContent = currentSession.overall_score;
+        if (isOffline) {
+            scoreBadge.className = 'font-semibold text-amber-400 bg-amber-950/60 border border-amber-800 px-2.5 py-0.5 rounded-full text-xs';
+            scoreBadge.innerHTML = `Score: <span id="overall-score-val">${currentSession.overall_score}</span>/100 <span class="text-[10px] opacity-80">(Offline Heuristic)</span>`;
+        } else {
+            scoreBadge.className = 'font-semibold text-emerald-400 bg-emerald-950/60 border border-emerald-800 px-2.5 py-0.5 rounded-full text-xs';
+            scoreBadge.innerHTML = `Score: <span id="overall-score-val">${currentSession.overall_score}</span>/100 <span class="text-[10px] opacity-80">(Frontier AI)</span>`;
+        }
     } else {
         document.getElementById('interview-score-badge').classList.add('hidden');
     }
@@ -570,9 +586,17 @@ function renderInterviewState() {
 
                 ${m.feedback ? `
                 <div class="mt-3 pt-2.5 border-t border-slate-800/80 text-[11px] text-indigo-300 bg-slate-950/60 p-2.5 rounded-xl">
-                    <div class="flex items-center space-x-1 font-semibold mb-0.5">
-                        <i data-lucide="award" class="w-3.5 h-3.5 text-amber-400"></i>
-                        <span>Round Score: ${m.score || 8}/10</span>
+                    <div class="flex items-center justify-between mb-1">
+                        <div class="flex items-center space-x-1 font-semibold">
+                            <i data-lucide="award" class="w-3.5 h-3.5 text-amber-400"></i>
+                            <span>Round Score: ${m.score != null ? m.score : '—'}/10</span>
+                        </div>
+                        ${m.evaluation_source === 'gemini'
+                            ? `<span class="text-[10px] px-2 py-0.5 rounded bg-emerald-950 text-emerald-400 border border-emerald-800 font-medium">Frontier AI Scored</span>`
+                            : m.evaluation_source === 'heuristic'
+                            ? `<span class="text-[10px] px-2 py-0.5 rounded bg-amber-950 text-amber-400 border border-amber-800 font-medium">Offline Heuristic</span>`
+                            : ''
+                        }
                     </div>
                     <div>${escapeHtml(m.feedback)}</div>
                 </div>` : ''}
