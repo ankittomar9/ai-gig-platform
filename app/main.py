@@ -270,6 +270,7 @@ async def get_app_settings():
         "minimum_rate": float(settings.get("minimum_rate", 0))
     }
 
+@app.put("/api/settings")
 @app.post("/api/settings")
 async def update_app_settings(payload: SettingsUpdate):
     if payload.gemini_api_key is not None:
