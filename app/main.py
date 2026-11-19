@@ -233,7 +233,16 @@ async def save_profile(profile: UserProfile):
 @app.post("/api/profile/upload-resume")
 async def upload_resume(file: UploadFile = File(...)):
     """Upload resume document (.docx, .txt, .md), auto-extract skills & update profile"""
-    temp_path = DATA_DIR / f"temp_{file.filename}"
+    raw_name = file.filename or ""
+    if not raw_name or ".." in raw_name or "/" in raw_name or "\\" in raw_name:
+        raise HTTPException(status_code=400, detail="Invalid filename or path traversal detected.")
+
+    safe_filename = Path(raw_name).name
+    ext = Path(safe_filename).suffix.lower()
+    if ext not in [".docx", ".txt", ".md"]:
+        raise HTTPException(status_code=400, detail=f"Unsupported file format '{ext}'. Only .docx, .txt, and .md files are allowed.")
+
+    temp_path = DATA_DIR / f"temp_{safe_filename}"
     try:
         with open(temp_path, "wb") as buffer:
             shutil.copyfileobj(file.file, buffer)
@@ -252,13 +261,22 @@ async def upload_resume(file: UploadFile = File(...)):
 
         return {
             "status": "success",
-            "message": f"Successfully parsed {len(skills)} skills from {file.filename}!",
+            "message": f"Successfully parsed {len(skills)} skills from {safe_filename}!",
             "extracted_skills": skills,
             "profile": current
         }
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Failed to process file: {str(e)}")
     finally:
         if temp_path.exists():
-            os.remove(temp_path)
+            try:
+                os.remove(temp_path)
+            except Exception:
+                pass
 
 @app.get("/api/settings")
 async def get_app_settings():
