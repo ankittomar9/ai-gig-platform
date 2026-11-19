@@ -1,6 +1,6 @@
 /* Custom Styling for AI Gig Hunter Platform */
 
-.tier-pill, .cat-pill {
+.tier-pill, .cat-pill, .company-pill, .exp-pill {
     padding: 0.35rem 0.75rem;
     border-radius: 0.75rem;
     font-weight: 500;
@@ -10,17 +10,24 @@
     background: rgba(15, 23, 42, 0.6);
 }
 
-.tier-pill:hover, .cat-pill:hover {
+.tier-pill:hover, .cat-pill:hover, .company-pill:hover, .exp-pill:hover {
     color: #f1f5f9;
     border-color: rgba(99, 102, 241, 0.4);
     background: rgba(30, 41, 59, 0.8);
 }
 
-.tier-pill.active, .cat-pill.active {
+.tier-pill.active, .cat-pill.active, .company-pill.active, .exp-pill.active {
     background: rgba(99, 102, 241, 0.2);
     border-color: #6366f1;
     color: #e0e7ff;
     box-shadow: 0 0 12px rgba(99, 102, 241, 0.2);
+}
+
+.exp-pill.active.fits-resume {
+    background: rgba(16, 185, 129, 0.2);
+    border-color: #10b981;
+    color: #6ee7b7;
+    box-shadow: 0 0 12px rgba(16, 185, 129, 0.25);
 }
 
 .step-badge {

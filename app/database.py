@@ -3,6 +3,7 @@ import json
 from typing import List, Dict, Any, Optional
 from datetime import datetime
 from app.config import DB_PATH
+from app.services.pay_parser import extract_experience_years
 
 def get_connection():
     conn = sqlite3.connect(DB_PATH)
@@ -34,9 +35,19 @@ def init_db():
         matching_skills TEXT,
         scraped_at TEXT,
         is_saved INTEGER DEFAULT 0,
-        application_status TEXT DEFAULT 'new'
+        application_status TEXT DEFAULT 'new',
+        min_exp_years INTEGER DEFAULT 0,
+        exp_label TEXT DEFAULT '0-2 yrs'
     )
     """)
+
+    # Migration: ensure min_exp_years and exp_label columns exist if table was already created
+    cursor.execute("PRAGMA table_info(jobs)")
+    cols = [r[1] for r in cursor.fetchall()]
+    if "min_exp_years" not in cols:
+        cursor.execute("ALTER TABLE jobs ADD COLUMN min_exp_years INTEGER DEFAULT 0")
+    if "exp_label" not in cols:
+        cursor.execute("ALTER TABLE jobs ADD COLUMN exp_label TEXT DEFAULT '0-2 yrs'")
 
     # User profile table
     cursor.execute("""
@@ -164,25 +175,40 @@ def save_or_update_jobs(jobs: List[Dict[str, Any]]):
         is_saved = existing["is_saved"] if existing else 0
         app_status = existing["application_status"] if existing else "new"
 
+        min_exp = j.get("min_exp_years")
+        exp_label = j.get("exp_label")
+        if min_exp is None or exp_label is None:
+            exp_info = extract_experience_years(j.get("title", ""), j.get("description", ""), j.get("company", ""))
+            min_exp = exp_info["min_exp"]
+            exp_label = exp_info["label"]
+
         cursor.execute("""
         INSERT OR REPLACE INTO jobs (
             id, platform, title, company, url, compensation, comp_min, comp_max,
             comp_unit, tier, category, location, requires_interview, description,
-            match_score, matching_skills, scraped_at, is_saved, application_status
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            match_score, matching_skills, scraped_at, is_saved, application_status,
+            min_exp_years, exp_label
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """, (
             j["id"], j["platform"], j["title"], j["company"], j["url"],
             j.get("compensation", "Unspecified"), j.get("comp_min", 0.0), j.get("comp_max", 0.0),
             j.get("comp_unit", "hr"), j.get("tier", "Mid-Tier ($15-$30)"), j.get("category", "Generalist"),
             j.get("location", "Remote"), j.get("requires_interview", "AI Interview"),
             j.get("description", ""), j.get("match_score", 0), skills_json,
-            now, is_saved, app_status
+            now, is_saved, app_status, int(min_exp), str(exp_label)
         ))
 
     conn.commit()
     conn.close()
 
-def get_all_jobs(tier: Optional[str] = None, category: Optional[str] = None, interview_type: Optional[str] = None, search: Optional[str] = None) -> List[Dict[str, Any]]:
+def get_all_jobs(
+    tier: Optional[str] = None,
+    category: Optional[str] = None,
+    interview_type: Optional[str] = None,
+    search: Optional[str] = None,
+    company: Optional[str] = None,
+    max_exp: Optional[int] = None
+) -> List[Dict[str, Any]]:
     conn = get_connection()
     cursor = conn.cursor()
     
@@ -201,6 +227,15 @@ def get_all_jobs(tier: Optional[str] = None, category: Optional[str] = None, int
         query += " AND requires_interview = ?"
         params.append(interview_type)
 
+    if company and company != "all":
+        query += " AND (company = ? OR company LIKE ? OR platform LIKE ?)"
+        s_comp = f"%{company}%"
+        params.extend([company, s_comp, s_comp])
+
+    if max_exp is not None:
+        query += " AND min_exp_years <= ?"
+        params.append(int(max_exp))
+
     if search:
         query += " AND (title LIKE ? OR company LIKE ? OR platform LIKE ? OR description LIKE ?)"
         s = f"%{search}%"
@@ -215,10 +250,34 @@ def get_all_jobs(tier: Optional[str] = None, category: Optional[str] = None, int
         d = dict(r)
         d["matching_skills"] = json.loads(d["matching_skills"]) if d["matching_skills"] else []
         d["is_saved"] = bool(d["is_saved"])
+        d["is_fits_resume"] = bool(d.get("min_exp_years", 0) <= 3)
         result.append(d)
 
     conn.close()
     return result
+
+def get_all_companies() -> List[Dict[str, Any]]:
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("""
+    SELECT 
+        company, 
+        COUNT(*) as total_count,
+        SUM(CASE WHEN min_exp_years <= 3 THEN 1 ELSE 0 END) as eligible_count
+    FROM jobs 
+    GROUP BY company 
+    ORDER BY total_count DESC
+    """)
+    rows = cursor.fetchall()
+    conn.close()
+    return [
+        {
+            "company": r["company"],
+            "total_count": r["total_count"],
+            "eligible_count": r["eligible_count"] if r["eligible_count"] is not None else 0
+        }
+        for r in rows
+    ]
 
 def get_job_by_id(job_id: str) -> Optional[Dict[str, Any]]:
     conn = get_connection()

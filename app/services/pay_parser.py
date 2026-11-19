@@ -117,3 +117,81 @@ def detect_interview_type(title: str, description: str, platform: str) -> str:
     
     # Default for AI annotation & training gigs is an AI/Automated screening assessment
     return "AI Interview"
+
+SENIOR_KEYWORDS = [
+    "senior", "sr.", "sr ", "staff", "principal", "lead", "director", "head of",
+    "vp", "vice president", "architect", "engineering manager", "lead engineer",
+    "distinguished", "founding engineer"
+]
+
+ENTRY_KEYWORDS = [
+    "junior", "entry", "associate", "intern", "apprentice", "trainee", "early career",
+    "no experience", "entry-level", "fresh"
+]
+
+DIRECT_TASK_PLATFORMS = [
+    "outlier", "remotasks", "alignerr", "dataannotation", "mindrift", "clickworker",
+    "prolific", "telus", "oneforma", "appen"
+]
+
+def extract_experience_years(title: str, description: str = "", company: str = "") -> Dict[str, Any]:
+    """
+    Extracts minimum years of experience and eligibility from job title and description.
+    Returns:
+    {
+        "min_exp": int,
+        "max_exp": int,
+        "label": str,
+        "is_fits_resume": bool (True if min_exp <= 3)
+    }
+    """
+    t_lower = title.lower()
+    c_lower = company.lower()
+    full = f"{title} {description}".lower()
+
+    # 1. Direct Senior keywords in Title
+    if any(k in t_lower for k in ["staff", "principal", "director", "head of", "vp", "architect", "distinguished"]):
+        return {"min_exp": 7, "max_exp": 12, "label": "7+ yrs (Staff/Lead)", "is_fits_resume": False}
+
+    if any(k in t_lower for k in ["senior", "sr.", "sr "]):
+        return {"min_exp": 5, "max_exp": 8, "label": "5+ yrs (Senior)", "is_fits_resume": False}
+
+    if any(k in t_lower for k in ["lead", "manager"]):
+        return {"min_exp": 5, "max_exp": 8, "label": "5+ yrs (Lead)", "is_fits_resume": False}
+
+    # 2. Check for explicit range in text, e.g. "3-5 years", "minimum 4 years"
+    range_match = re.search(r'(?:minimum|at least)?\s*(\d+)\+?\s*(?:-|to|–)\s*(\d+)\s*(?:years?|yrs?)(?:\s*of)?\s*(?:experience|exp)?', full)
+    if range_match:
+        min_v = int(range_match.group(1))
+        max_v = int(range_match.group(2))
+        if 1 <= min_v <= 15 and max_v <= 20:
+            return {
+                "min_exp": min_v,
+                "max_exp": max_v,
+                "label": f"{min_v}-{max_v} yrs",
+                "is_fits_resume": min_v <= 3
+            }
+
+    single_match = re.search(r'(?:minimum|at least)?\s*(\d+)\+?\s*(?:years?|yrs?)(?:\s*of)?\s*(?:experience|exp)?', full)
+    if single_match:
+        val = int(single_match.group(1))
+        if 1 <= val <= 15:
+            label = f"{val}+ yrs" if val >= 4 else f"{val} yrs"
+            return {
+                "min_exp": val,
+                "max_exp": val + 2,
+                "label": label,
+                "is_fits_resume": val <= 3
+            }
+
+    # 3. Check for Entry / Junior / Associate
+    if any(k in t_lower for k in ENTRY_KEYWORDS):
+        return {"min_exp": 0, "max_exp": 2, "label": "0-2 yrs (Entry/Junior)", "is_fits_resume": True}
+
+    # 4. Direct Task / Evaluation / RLHF Platforms
+    if any(k in c_lower for k in DIRECT_TASK_PLATFORMS) or any(k in t_lower for k in ["evaluator", "annotator", "trainer", "tutor", "rater", "contributor", "reviewer"]):
+        return {"min_exp": 0, "max_exp": 2, "label": "0-2 yrs (Assessment Based)", "is_fits_resume": True}
+
+    # 5. Default mid-level IC (Software Engineer, Analyst, Operations)
+    return {"min_exp": 2, "max_exp": 3, "label": "1-3 yrs (Mid-Level)", "is_fits_resume": True}
+

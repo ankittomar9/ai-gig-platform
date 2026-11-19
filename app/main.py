@@ -12,7 +12,7 @@ from app.database import (
     init_db, get_all_jobs, get_job_by_id, update_job_status,
     toggle_save_job, get_user_profile, update_user_profile,
     get_settings, set_setting, get_interview_session,
-    get_all_personas, activate_persona
+    get_all_personas, activate_persona, get_all_companies
 )
 from app.models import (
     JobStatusUpdate, SettingsUpdate, UserProfile,
@@ -69,11 +69,25 @@ async def list_jobs(
     tier: Optional[str] = Query(None),
     category: Optional[str] = Query(None),
     interview_type: Optional[str] = Query(None),
-    search: Optional[str] = Query(None)
+    search: Optional[str] = Query(None),
+    company: Optional[str] = Query(None),
+    max_exp: Optional[int] = Query(None)
 ):
-    """Retrieve jobs with optional filtering"""
-    jobs = get_all_jobs(tier=tier, category=category, interview_type=interview_type, search=search)
+    """Retrieve jobs with optional filtering by tier, category, interview, company, search, and max experience"""
+    jobs = get_all_jobs(
+        tier=tier,
+        category=category,
+        interview_type=interview_type,
+        search=search,
+        company=company,
+        max_exp=max_exp
+    )
     return {"count": len(jobs), "jobs": jobs}
+
+@app.get("/api/companies")
+async def list_companies():
+    """Retrieve list of companies with live job counts and eligible (<3 yrs) breakdown"""
+    return {"companies": get_all_companies()}
 
 @app.get("/api/jobs/{job_id}")
 async def get_job(job_id: str):

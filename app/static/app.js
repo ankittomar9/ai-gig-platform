@@ -2,6 +2,9 @@
 let allJobs = [];
 let activeTier = 'all';
 let activeCategory = 'all';
+let activeCompany = 'all';
+let activeExp = 3; // Default: show gigs matching Ankit's <= 3 years experience!
+let allCompanies = [];
 let currentSession = null;
 let currentJobForInterview = null;
 let currentAppPack = null;
@@ -15,6 +18,7 @@ document.addEventListener('DOMContentLoaded', () => {
     loadProfile();
     loadPersonas();
     checkWhisperSupport();
+    loadCompanies();
     loadJobs();
 });
 
@@ -24,6 +28,8 @@ async function loadJobs() {
         const queryParams = new URLSearchParams();
         if (activeTier !== 'all') queryParams.append('tier', activeTier);
         if (activeCategory !== 'all') queryParams.append('category', activeCategory);
+        if (activeCompany !== 'all') queryParams.append('company', activeCompany);
+        if (activeExp !== 'all') queryParams.append('max_exp', activeExp);
         
         const searchVal = document.getElementById('input-search').value.trim();
         if (searchVal) queryParams.append('search', searchVal);
@@ -32,8 +38,11 @@ async function loadJobs() {
         const data = await res.json();
         allJobs = data.jobs || [];
 
+        // Refresh counter for gigs fitting resume
+        updateEligibleCounter();
+
         // If zero jobs in DB, auto-trigger first scan
-        if (allJobs.length === 0 && !searchVal && activeTier === 'all' && activeCategory === 'all') {
+        if (allJobs.length === 0 && !searchVal && activeTier === 'all' && activeCategory === 'all' && activeCompany === 'all' && activeExp === 'all') {
             await triggerScan();
             return;
         }
@@ -123,6 +132,18 @@ function renderJobs(jobs) {
                     <span class="px-2.5 py-0.5 rounded-full font-medium border bg-slate-800/80 text-slate-300 border-slate-700">
                         ${escapeHtml(job.category)}
                     </span>
+                    <!-- Experience requirement badge -->
+                    ${job.min_exp_years <= 3 ? `
+                    <span class="px-2.5 py-0.5 rounded-full font-medium border bg-emerald-950/70 text-emerald-300 border-emerald-800/80 flex items-center space-x-1" title="Fits your 2-3 years resume profile">
+                        <i data-lucide="check-circle-2" class="w-3 h-3 text-emerald-400"></i>
+                        <span>${escapeHtml(job.exp_label || '0-3 yrs')}</span>
+                    </span>
+                    ` : `
+                    <span class="px-2.5 py-0.5 rounded-full font-medium border bg-slate-800/60 text-slate-400 border-slate-700/60 flex items-center space-x-1" title="Requires senior experience (risk of rejection)">
+                        <i data-lucide="alert-triangle" class="w-3 h-3 text-amber-400/80"></i>
+                        <span>${escapeHtml(job.exp_label || '5+ yrs')}</span>
+                    </span>
+                    `}
                 </div>
 
                 <!-- Match Score & Skills -->
@@ -229,6 +250,72 @@ function setCategoryFilter(cat) {
         else el.classList.remove('active');
     });
     loadJobs();
+}
+
+// Company Filter
+function setCompanyFilter(company) {
+    activeCompany = company;
+    const selectEl = document.getElementById('select-company');
+    if (selectEl) selectEl.value = company;
+
+    document.querySelectorAll('.company-pill').forEach(el => {
+        if (el.getAttribute('data-company') === company) el.classList.add('active');
+        else el.classList.remove('active');
+    });
+    loadJobs();
+}
+
+// Experience Level Filter
+function setExpFilter(exp) {
+    activeExp = exp;
+    document.querySelectorAll('.exp-pill').forEach(el => {
+        const dataExp = el.getAttribute('data-exp');
+        if (String(dataExp) === String(exp)) {
+            el.classList.add('active');
+            if (String(exp) === '3') el.classList.add('fits-resume');
+        } else {
+            el.classList.remove('active');
+            el.classList.remove('fits-resume');
+        }
+    });
+    loadJobs();
+}
+
+// Load company list for dropdown
+async function loadCompanies() {
+    try {
+        const res = await fetch('/api/companies');
+        const data = await res.json();
+        allCompanies = data.companies || [];
+
+        const selectEl = document.getElementById('select-company');
+        if (!selectEl) return;
+
+        const totalGigs = allCompanies.reduce((acc, c) => acc + c.total_count, 0);
+        selectEl.innerHTML = `<option value="all">All Companies (${totalGigs} Total Across All Portals)</option>`;
+
+        allCompanies.forEach(c => {
+            const opt = document.createElement('option');
+            opt.value = c.company;
+            opt.textContent = `${c.company} (${c.total_count} total • ${c.eligible_count} fit ≤3y)`;
+            if (activeCompany === c.company) opt.selected = true;
+            selectEl.appendChild(opt);
+        });
+    } catch (e) {
+        console.error("Failed to load companies", e);
+    }
+}
+
+// Update live counter for gigs fitting resume
+async function updateEligibleCounter() {
+    try {
+        const res = await fetch('/api/jobs?max_exp=3');
+        const data = await res.json();
+        const el = document.getElementById('count-eligible');
+        if (el) el.textContent = data.count || 0;
+    } catch (e) {
+        console.error(e);
+    }
 }
 
 // Toggle Bookmark / Saved
@@ -667,7 +754,12 @@ async function saveAppSettings() {
 
 function openModal(id) {
     const modal = document.getElementById(id);
-    if (modal) modal.classList.remove('hidden');
+    if (modal) {
+        modal.classList.remove('hidden');
+        setTimeout(() => {
+            if (window.lucide) lucide.createIcons();
+        }, 50);
+    }
 }
 
 function closeModal(id) {

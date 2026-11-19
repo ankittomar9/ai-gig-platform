@@ -39,7 +39,7 @@ DIRECT_PLATFORM_POSTS = [
     {
         "id": "direct_oneforma_linguistics",
         "platform": "OneForma",
-        "company": "OneForma (Centific)",
+        "company": "OneForma",
         "title": "Multilingual AI Data Collector & Transcriber",
         "url": "https://jobs.oneforma.com/",
         "compensation": "$10 - $18/hr",
@@ -69,7 +69,23 @@ DIRECT_PLATFORM_POSTS = [
         "description": "Evaluate online search results, relevance of AI generated answers, and web content quality according to rigorous evaluation guidelines."
     },
 
-    # --- Mid-Tier ($15-$30) ---
+    # --- Mid-Tier ($15-$30) & Outlier Core ---
+    {
+        "id": "direct_outlier_rlhf_generalist",
+        "platform": "Outlier.ai",
+        "company": "Outlier",
+        "title": "Generalist RLHF Evaluator & Fact-Checking Specialist",
+        "url": "https://outlier.ai/",
+        "compensation": "$18 - $25/hr",
+        "comp_min": 18.0,
+        "comp_max": 25.0,
+        "comp_unit": "hr",
+        "tier": "Mid-Tier ($15-$30)",
+        "category": "Writing & RLHF",
+        "location": "Remote",
+        "requires_interview": "Automated Test",
+        "description": "Perform pairwise comparisons of LLM responses, score against truthfulness and instruction-following rubrics, and flag subtle hallucinations. Direct qualification test."
+    },
     {
         "id": "direct_dataannotation_core",
         "platform": "DataAnnotation.tech",
@@ -82,25 +98,9 @@ DIRECT_PLATFORM_POSTS = [
         "comp_unit": "hr",
         "tier": "Mid-Tier ($15-$30)",
         "category": "Writing & RLHF",
-        "location": "Remote (US/UK/CA/AU/NZ/Global)",
+        "location": "Remote (Global)",
         "requires_interview": "Automated Test",
         "description": "Work with cutting-edge AI models. Compare responses, write creative stories, evaluate factual correctness, and craft complex conversational prompts."
-    },
-    {
-        "id": "direct_dataannotation_coding",
-        "platform": "DataAnnotation.tech",
-        "company": "DataAnnotation",
-        "title": "Software Engineering & Code Evaluation Specialist",
-        "url": "https://www.dataannotation.tech/",
-        "compensation": "$40 - $45/hr",
-        "comp_min": 40.0,
-        "comp_max": 45.0,
-        "comp_unit": "hr",
-        "tier": "Expert ($30-$100+)",
-        "category": "Coding",
-        "location": "Remote",
-        "requires_interview": "Automated Test",
-        "description": "Write code to solve complex algorithmic tasks, debug code written by AI models, and write test suites in Python, JavaScript, and other languages."
     },
     {
         "id": "direct_mindrift_tutor",
@@ -119,23 +119,103 @@ DIRECT_PLATFORM_POSTS = [
         "description": "Craft high-quality prompts and answers, verify factual accuracy, and teach AI models how to formulate clear, logical explanations."
     },
     {
-        "id": "direct_alignerr_expert",
+        "id": "direct_alignerr_writing_rlhf",
         "platform": "Alignerr",
-        "company": "Alignerr (Labelbox)",
-        "title": "Domain Expert AI Alignerr (STEM, Coding & Writing)",
+        "company": "Alignerr",
+        "title": "Technical Writer & Domain Expert RLHF Evaluator",
         "url": "https://www.alignerr.com/",
-        "compensation": "$25 - $60/hr",
+        "compensation": "$25 - $40/hr",
         "comp_min": 25.0,
+        "comp_max": 40.0,
+        "comp_unit": "hr",
+        "tier": "Mid-Tier ($15-$30)",
+        "category": "Writing & RLHF",
+        "location": "Remote",
+        "requires_interview": "Automated Test",
+        "description": "Perform in-depth domain assessments, critique LLM reasoning steps, and formulate gold-standard references across technical topics."
+    },
+
+    # --- Expert Tier ($30-$100+) ---
+    {
+        "id": "direct_outlier_coding",
+        "platform": "Outlier.ai",
+        "company": "Outlier",
+        "title": "AI Software Engineer & Code Evaluator (Java, Python, C++)",
+        "url": "https://outlier.ai/",
+        "compensation": "$35 - $50/hr",
+        "comp_min": 35.0,
+        "comp_max": 50.0,
+        "comp_unit": "hr",
+        "tier": "Expert ($30-$100+)",
+        "category": "Coding",
+        "location": "Remote",
+        "requires_interview": "Automated Test",
+        "description": "Evaluate and debug code written by LLMs, design algorithmic unit tests, and critique model explanations in Java, Python, and C++. Fast screening test with project placement."
+    },
+    {
+        "id": "direct_outlier_math",
+        "platform": "Outlier.ai",
+        "company": "Outlier",
+        "title": "AI Reasoning & Mathematical Logic Trainer",
+        "url": "https://outlier.ai/",
+        "compensation": "$30 - $45/hr",
+        "comp_min": 30.0,
+        "comp_max": 45.0,
+        "comp_unit": "hr",
+        "tier": "Expert ($30-$100+)",
+        "category": "Math & Reasoning",
+        "location": "Remote",
+        "requires_interview": "Automated Test",
+        "description": "Formulate step-by-step mathematical proofs, chain-of-thought evaluations, and verify mathematical derivations generated by frontier reasoning models."
+    },
+    {
+        "id": "direct_alignerr_coding",
+        "platform": "Alignerr",
+        "company": "Alignerr",
+        "title": "AI Code Reviewer & Evaluation Engineer (Java, Spring, Python)",
+        "url": "https://www.alignerr.com/",
+        "compensation": "$35 - $60/hr",
+        "comp_min": 35.0,
         "comp_max": 60.0,
         "comp_unit": "hr",
         "tier": "Expert ($30-$100+)",
         "category": "Coding",
         "location": "Remote",
         "requires_interview": "Automated Test",
-        "description": "Work on RLHF and model alignment across technical domains including software engineering, advanced mathematics, physics, and linguistics."
+        "description": "Rigorous code review, automated test evaluation, and ground-truth rubric verification for enterprise LLMs. Powered by Labelbox's Alignerr platform."
     },
-
-    # --- Expert Tier ($30-$100+) ---
+    {
+        "id": "direct_alignerr_logic",
+        "platform": "Alignerr",
+        "company": "Alignerr",
+        "title": "Logic, Reasoning & Quantitative Problem Solver",
+        "url": "https://www.alignerr.com/",
+        "compensation": "$30 - $55/hr",
+        "comp_min": 30.0,
+        "comp_max": 55.0,
+        "comp_unit": "hr",
+        "tier": "Expert ($30-$100+)",
+        "category": "Math & Reasoning",
+        "location": "Remote",
+        "requires_interview": "Automated Test",
+        "description": "Verify step-by-step logic, solve algorithmic puzzles, and calibrate safety and truthfulness in model outputs."
+    },
+    {
+        "id": "direct_dataannotation_coding",
+        "platform": "DataAnnotation.tech",
+        "company": "DataAnnotation",
+        "title": "Software Engineering & Code Evaluation Specialist",
+        "url": "https://www.dataannotation.tech/",
+        "compensation": "$40 - $45/hr",
+        "comp_min": 40.0,
+        "comp_max": 45.0,
+        "comp_unit": "hr",
+        "tier": "Expert ($30-$100+)",
+        "category": "Coding",
+        "location": "Remote",
+        "requires_interview": "Automated Test",
+        "description": "Write code to solve complex algorithmic tasks, debug code written by AI models, and write test suites in Python, JavaScript, Java, and SQL."
+    },
     {
         "id": "direct_micro1_ai_dev",
         "platform": "Micro1",

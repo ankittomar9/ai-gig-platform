@@ -5,6 +5,7 @@ from app.scrapers.greenhouse import GreenhouseScraper
 from app.scrapers.lever import LeverScraper
 from app.scrapers.direct_platforms import DirectPlatformScraper
 from app.services.matcher import calculate_match_score
+from app.services.pay_parser import extract_experience_years
 from app.database import get_user_profile, save_or_update_jobs
 
 async def run_full_scan() -> Dict[str, Any]:
@@ -34,7 +35,7 @@ async def run_full_scan() -> Dict[str, Any]:
     user_skills = profile.get("skills", [])
     user_resume = profile.get("resume_text", "")
 
-    # Calculate match scores
+    # Calculate match scores and experience levels
     for job in all_jobs:
         score, matching = calculate_match_score(
             job.get("title", ""),
@@ -44,6 +45,15 @@ async def run_full_scan() -> Dict[str, Any]:
         )
         job["match_score"] = score
         job["matching_skills"] = matching
+
+        exp_data = extract_experience_years(
+            job.get("title", ""),
+            job.get("description", ""),
+            job.get("company", "")
+        )
+        job["min_exp_years"] = exp_data["min_exp"]
+        job["max_exp_years"] = exp_data["max_exp"]
+        job["exp_label"] = exp_data["label"]
 
     # Save to database
     save_or_update_jobs(all_jobs)

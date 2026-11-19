@@ -7,7 +7,7 @@ GREENHOUSE_BOARDS = [
     {"slug": "scaleai", "company": "Scale AI", "default_tier": "Expert ($30-$100+)"},
     {"slug": "turing", "company": "Turing", "default_tier": "Expert ($30-$100+)"},
     {"slug": "invisible", "company": "Invisible Technologies", "default_tier": "Mid-Tier ($15-$30)"},
-    {"slug": "remotasks", "company": "Remotasks", "default_tier": "Mid-Tier ($15-$30)"}
+    {"slug": "remotasks", "company": "Outlier", "default_tier": "Mid-Tier ($15-$30)"}
 ]
 
 class GreenhouseScraper(BaseScraper):
