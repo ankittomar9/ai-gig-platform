@@ -9,7 +9,7 @@
 | WO | Title | Status | Branch | Commit SHA | Evidence Report |
 |---|---|---|---|---|---|
 | WO-1 | Make scoring honest (F1) | VERIFIED | `interview/scoring-honesty-fix` | `f73f8c2` | `collab/gemini/SPEC01-WO-1-REPORT.md` |
-| WO-2 | Make interviews actually job-aware (F2) | QUEUED | `interview/job-aware-prompts-fix` | - | `collab/gemini/SPEC01-WO-2-REPORT.md` |
+| WO-2 | Make interviews actually job-aware (F2) | VERIFIED | `interview/job-aware-prompts-fix` | `3e522da` | `collab/gemini/SPEC01-WO-2-REPORT.md` |
 | WO-3 | Stop settings save from resetting model (F5) | QUEUED | `settings/model-reset-fix` | - | `collab/gemini/SPEC01-WO-3-REPORT.md` |
 | WO-4 | Fix Docker build & compose (F4) | QUEUED | `docker/fresh-clone-build-fix` | - | `collab/gemini/SPEC01-WO-4-REPORT.md` |
 | WO-5 | Purge personal data from working tree (F3) | QUEUED | `privacy/pii-purge-fix` | - | `collab/gemini/SPEC01-WO-5-REPORT.md` |
