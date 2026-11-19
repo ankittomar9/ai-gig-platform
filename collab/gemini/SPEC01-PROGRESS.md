@@ -21,5 +21,5 @@
 | WO-11 | Security polish: CORS & key header (F13, F15) | VERIFIED | `security/cors-and-key-header-fix` | `a0caf8c` | `collab/gemini/SPEC01-WO-11-REPORT.md` |
 | WO-12 | Score & UI integrity (F12, F16) | VERIFIED | `interview/score-integrity-fix` | `f114cb2` | `collab/gemini/SPEC01-WO-12-REPORT.md` |
 | WO-13 | Code cleanup, title cap, dependency pins (F18, F20, F21) | VERIFIED | `cleanup/dead-code-and-pins-fix` | `2b7ef80` | `collab/gemini/SPEC01-WO-13-REPORT.md` |
-| WO-14 | Minimal test suite (pytest) | QUEUED | `tests/minimal-suite-1` | - | `collab/gemini/SPEC01-WO-14-REPORT.md` |
+| WO-14 | Minimal test suite (pytest) | VERIFIED | `tests/minimal-suite-1` | `0397251` | `collab/gemini/SPEC01-WO-14-REPORT.md` |
 | WO-15 | History rewrite PII purge (Operator-gated) | GATED | `privacy/history-purge-1` | - | `collab/gemini/SPEC01-WO-15-REPORT.md` |
