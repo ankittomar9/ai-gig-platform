@@ -26,8 +26,7 @@ async def check_whisper_status() -> Dict[str, Any]:
         "local_whisper_online": is_local_online,
         "local_endpoint": LOCAL_WHISPER_ENDPOINT,
         "groq_whisper_available": bool(groq_key),
-        "gemini_available": bool(gemini_key),
-        "web_speech_supported": True # Always supported in Chrome/Edge browsers
+        "gemini_available": bool(gemini_key)
     }
 
 async def transcribe_audio_bytes(audio_bytes: bytes, filename: str = "audio.wav") -> str:
