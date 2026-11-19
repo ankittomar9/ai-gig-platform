@@ -167,8 +167,14 @@
                     <span id="step-4" class="step-badge">4. Red-Teaming</span>
                     <span id="step-5" class="step-badge">5. Report Card</span>
                 </div>
-                <div id="interview-score-badge" class="font-semibold text-emerald-400 bg-emerald-950/60 border border-emerald-800 px-2.5 py-0.5 rounded-full hidden">
-                    Score: <span id="overall-score-val">0</span>/100
+                <div class="flex items-center space-x-3">
+                    <span id="whisper-badge" class="flex items-center space-x-1.5 text-[11px] text-emerald-400 bg-emerald-950/40 border border-emerald-800/60 px-2.5 py-0.5 rounded-full">
+                        <i data-lucide="mic" class="w-3 h-3 text-emerald-400"></i>
+                        <span>Whisper Voice Ready</span>
+                    </span>
+                    <div id="interview-score-badge" class="font-semibold text-emerald-400 bg-emerald-950/60 border border-emerald-800 px-2.5 py-0.5 rounded-full hidden">
+                        Score: <span id="overall-score-val">0</span>/100
+                    </div>
                 </div>
             </div>
 
@@ -179,15 +185,31 @@
 
             <!-- Chat Input Area -->
             <div class="p-4 bg-slate-900 border-t border-slate-800 space-y-2">
+                <!-- Live Voice Recording Banner -->
+                <div id="voice-banner" class="hidden flex items-center justify-between bg-rose-950/60 border border-rose-800/80 px-3.5 py-2 rounded-xl text-xs text-rose-200 animate-pulse">
+                    <div class="flex items-center space-x-2">
+                        <span class="w-2.5 h-2.5 rounded-full bg-rose-500 animate-ping"></span>
+                        <span id="voice-banner-text">Listening... Speak naturally in full sentences. Your words appear below.</span>
+                    </div>
+                    <button onclick="stopVoiceInput()" class="text-xs bg-rose-800 hover:bg-rose-700 text-white font-semibold px-2.5 py-1 rounded-lg transition">Stop Recording</button>
+                </div>
+
                 <div class="flex gap-2">
-                    <textarea id="chat-input" rows="2" placeholder="Type your response to the AI interviewer... (Formulate thorough reasoning, rubric references, and clear explanations)"
+                    <textarea id="chat-input" rows="2" placeholder="Speak your answer with the mic or type here... (Formulate thorough reasoning, rubric references, and clear explanations)"
                               class="flex-1 bg-slate-950 border border-slate-800 rounded-xl p-3 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 resize-none"></textarea>
-                    <button id="btn-send-reply" onclick="sendInterviewReply()" class="bg-indigo-600 hover:bg-indigo-500 text-white font-medium px-5 rounded-xl text-sm flex items-center justify-center transition active:scale-95">
+                    
+                    <!-- Whisper Voice Input Button -->
+                    <button id="btn-mic" onclick="toggleVoiceInput()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 px-4 rounded-xl flex flex-col items-center justify-center space-y-1 transition active:scale-95 group" title="Click to speak your response (Whisper Voice STT)">
+                        <i data-lucide="mic" id="mic-icon" class="w-5 h-5 text-rose-400 group-hover:scale-110 transition"></i>
+                        <span id="mic-label" class="text-[10px] font-bold text-slate-300">Speak</span>
+                    </button>
+
+                    <button id="btn-send-reply" onclick="sendInterviewReply()" class="bg-indigo-600 hover:bg-indigo-500 text-white font-medium px-5 rounded-xl text-sm flex items-center justify-center transition active:scale-95" title="Send answer">
                         <i data-lucide="send" class="w-4 h-4"></i>
                     </button>
                 </div>
                 <div class="flex justify-between items-center text-xs text-slate-400 px-1">
-                    <span>💡 Tip: AI interviewers evaluate your rubric adherence, step-by-step logic, and factual rigor.</span>
+                    <span>💡 Tip: Practice speaking your answers 2-5 times to build natural rhythm and clear your real interview.</span>
                     <button onclick="toggleHint()" class="text-indigo-400 hover:underline">Show Winning Answer Rubric</button>
                 </div>
                 <div id="hint-box" class="hidden bg-slate-950/90 border border-indigo-900/50 p-3 rounded-xl text-xs text-indigo-200 mt-2">
@@ -216,6 +238,15 @@
             </div>
 
             <div class="flex-1 p-6 overflow-y-auto space-y-4 text-sm text-slate-300">
+                <!-- Anti-AI Detector Banner -->
+                <div class="flex items-center justify-between bg-emerald-950/40 border border-emerald-800/60 p-2.5 rounded-xl text-xs text-emerald-300">
+                    <div class="flex items-center space-x-2">
+                        <i data-lucide="shield-check" class="w-4 h-4 text-emerald-400"></i>
+                        <span><strong>Anti-AI Detector Active:</strong> Natural first-person tone, high burstiness, and zero LLM buzzwords.</span>
+                    </div>
+                    <span class="text-[10px] bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 px-2.5 py-0.5 rounded-full font-semibold">Bypasses GPTZero</span>
+                </div>
+
                 <!-- Navigation Tabs inside Pack Modal -->
                 <div class="flex space-x-2 border-b border-slate-800 pb-2 text-xs">
                     <button id="tab-btn-answers" onclick="switchPackTab('answers')" class="font-semibold text-indigo-400 border-b-2 border-indigo-500 pb-1 px-2">Application Answers</button>

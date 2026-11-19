@@ -23,6 +23,8 @@ from app.services.matcher import extract_text_from_file, extract_skills_from_tex
 from app.services.application_pack import generate_application_pack
 from app.services.interview_agent import start_new_interview, process_interview_reply
 from app.services.resume_generator import generate_tailored_resume
+from app.services.speech import check_whisper_status, transcribe_audio_bytes
+from app.services.humanizer import humanize_resume_text
 
 # Initialize database on startup
 init_db()
@@ -96,21 +98,38 @@ async def toggle_save(job_id: str):
     return {"status": "success", "job_id": job_id, "is_saved": new_state}
 
 @app.get("/api/jobs/{job_id}/application-pack")
-async def get_application_pack(job_id: str):
+async def get_application_pack(job_id: str, humanize: bool = True):
     job = get_job_by_id(job_id)
     if not job:
         raise HTTPException(status_code=404, detail="Job not found")
     profile = get_user_profile()
-    pack = generate_application_pack(job, profile)
+    pack = generate_application_pack(job, profile, humanize=humanize)
     return pack
 
 @app.get("/api/jobs/{job_id}/tailored-resume")
-async def get_job_tailored_resume(job_id: str):
-    """Dynamically generate a tailored ATS resume customized for this specific job"""
+async def get_job_tailored_resume(job_id: str, humanize: bool = True):
+    """Dynamically generate a tailored ATS resume customized for this specific job, with Anti-AI detector humanization"""
     profile = get_user_profile()
     try:
         resume_data = generate_tailored_resume(job_id, profile)
+        if humanize:
+            resume_data["formatted_resume"] = humanize_resume_text(resume_data["formatted_resume"])
         return resume_data
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/whisper-status")
+async def get_whisper_status():
+    """Returns availability of local Whisper sidecar (port 8178), Groq Whisper, and Web Speech"""
+    return await check_whisper_status()
+
+@app.post("/api/transcribe")
+async def transcribe_audio(file: UploadFile = File(...)):
+    """Transcribes spoken audio recorded from candidate microphone via Whisper sidecar"""
+    try:
+        contents = await file.read()
+        text = await transcribe_audio_bytes(contents, filename=file.filename or "recording.wav")
+        return {"status": "success", "text": text}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

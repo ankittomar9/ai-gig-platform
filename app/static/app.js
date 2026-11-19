@@ -14,6 +14,7 @@ document.addEventListener('DOMContentLoaded', () => {
     loadSettings();
     loadProfile();
     loadPersonas();
+    checkWhisperSupport();
     loadJobs();
 });
 
@@ -623,4 +624,166 @@ function escapeHtml(str) {
         .replace(/>/g, "&gt;")
         .replace(/"/g, "&quot;")
         .replace(/'/g, "&#039;");
+}
+
+// --- VOICE & WHISPER RECOGNITION CONTROLLER ---
+
+let speechRecognizer = null;
+let isRecording = false;
+let mediaRecorder = null;
+let audioChunks = [];
+
+function checkWhisperSupport() {
+    fetch('/api/whisper-status')
+        .then(r => r.json())
+        .then(data => {
+            const badge = document.getElementById('whisper-badge');
+            if (!badge) return;
+            if (data.local_whisper_online) {
+                badge.innerHTML = `<i data-lucide="zap" class="w-3 h-3 text-emerald-400"></i><span>Local Whisper (Port 8178) Online</span>`;
+            } else if (data.groq_whisper_available) {
+                badge.innerHTML = `<i data-lucide="zap" class="w-3 h-3 text-cyan-400"></i><span>Groq Whisper Active</span>`;
+            } else {
+                badge.innerHTML = `<i data-lucide="mic" class="w-3 h-3 text-emerald-400"></i><span>Browser Voice STT Ready</span>`;
+            }
+            lucide.createIcons();
+        })
+        .catch(() => {});
+}
+
+function initSpeechRecognition() {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) return null;
+
+    const recognizer = new SpeechRecognition();
+    recognizer.continuous = true;
+    recognizer.interimResults = true;
+    recognizer.lang = 'en-US';
+
+    recognizer.onresult = (event) => {
+        let transcript = '';
+        for (let i = event.resultIndex; i < event.results.length; ++i) {
+            transcript += event.results[i][0].transcript;
+        }
+        const input = document.getElementById('chat-input');
+        if (input && transcript) {
+            if (event.results[event.results.length - 1].isFinal) {
+                input.value = (input.value ? input.value.trim() + ' ' : '') + transcript.trim();
+            }
+        }
+    };
+
+    recognizer.onerror = (event) => {
+        console.warn('Speech recognition notice:', event.error);
+        if (event.error !== 'no-speech') {
+            stopVoiceInput();
+        }
+    };
+
+    recognizer.onend = () => {
+        if (isRecording) {
+            try { recognizer.start(); } catch(e) {}
+        }
+    };
+
+    return recognizer;
+}
+
+function toggleVoiceInput() {
+    if (isRecording) {
+        stopVoiceInput();
+    } else {
+        startVoiceInput();
+    }
+}
+
+async function startVoiceInput() {
+    const input = document.getElementById('chat-input');
+    const banner = document.getElementById('voice-banner');
+    const micLabel = document.getElementById('mic-label');
+    const btnMic = document.getElementById('btn-mic');
+
+    // 1. Try Browser Web Speech API (real-time zero latency)
+    if (!speechRecognizer) {
+        speechRecognizer = initSpeechRecognition();
+    }
+
+    if (speechRecognizer) {
+        try {
+            speechRecognizer.start();
+            isRecording = true;
+            if (banner) banner.classList.remove('hidden');
+            if (micLabel) micLabel.textContent = 'Stop';
+            if (btnMic) {
+                btnMic.classList.remove('bg-slate-800');
+                btnMic.classList.add('bg-rose-600', 'animate-pulse');
+            }
+            showToast('Microphone listening! Speak your answer naturally.');
+            return;
+        } catch (e) {
+            console.warn('Web Speech start error, trying MediaRecorder fallback', e);
+        }
+    }
+
+    // 2. MediaRecorder fallback to /api/transcribe
+    if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            audioChunks = [];
+            mediaRecorder = new MediaRecorder(stream);
+            mediaRecorder.ondataavailable = (e) => audioChunks.push(e.data);
+            mediaRecorder.onstop = async () => {
+                const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+                const formData = new FormData();
+                formData.append('file', audioBlob, 'candidate_voice.wav');
+                showToast('Transcribing audio via Whisper...');
+                try {
+                    const res = await fetch('/api/transcribe', { method: 'POST', body: formData });
+                    const data = await res.json();
+                    if (data.text) {
+                        input.value = (input.value ? input.value.trim() + ' ' : '') + data.text.trim();
+                        showToast('Voice transcribed successfully!');
+                    }
+                } catch (err) {
+                    showToast('Transcription failed: ' + err.message);
+                }
+            };
+
+            mediaRecorder.start();
+            isRecording = true;
+            if (banner) banner.classList.remove('hidden');
+            if (micLabel) micLabel.textContent = 'Stop';
+            if (btnMic) {
+                btnMic.classList.remove('bg-slate-800');
+                btnMic.classList.add('bg-rose-600', 'animate-pulse');
+            }
+            showToast('Recording voice... Speak your answer.');
+        } catch (err) {
+            showToast('Microphone access denied or not available.');
+        }
+    } else {
+        showToast('Voice input is not supported in this browser. Please use Chrome or Edge.');
+    }
+}
+
+function stopVoiceInput() {
+    isRecording = false;
+    const banner = document.getElementById('voice-banner');
+    const micLabel = document.getElementById('mic-label');
+    const btnMic = document.getElementById('btn-mic');
+
+    if (banner) banner.classList.add('hidden');
+    if (micLabel) micLabel.textContent = 'Speak';
+    if (btnMic) {
+        btnMic.classList.remove('bg-rose-600', 'animate-pulse');
+        btnMic.classList.add('bg-slate-800');
+    }
+
+    if (speechRecognizer) {
+        try { speechRecognizer.stop(); } catch(e) {}
+    }
+
+    if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+        mediaRecorder.stop();
+    }
 }
