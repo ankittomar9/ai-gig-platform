@@ -1,0 +1,71 @@
+/* Custom Styling for AI Gig Hunter Platform */
+
+.tier-pill, .cat-pill {
+    padding: 0.35rem 0.75rem;
+    border-radius: 0.75rem;
+    font-weight: 500;
+    transition: all 0.15s ease-in-out;
+    border: 1px solid rgba(51, 65, 85, 0.6);
+    color: #94a3b8;
+    background: rgba(15, 23, 42, 0.6);
+}
+
+.tier-pill:hover, .cat-pill:hover {
+    color: #f1f5f9;
+    border-color: rgba(99, 102, 241, 0.4);
+    background: rgba(30, 41, 59, 0.8);
+}
+
+.tier-pill.active, .cat-pill.active {
+    background: rgba(99, 102, 241, 0.2);
+    border-color: #6366f1;
+    color: #e0e7ff;
+    box-shadow: 0 0 12px rgba(99, 102, 241, 0.2);
+}
+
+.step-badge {
+    color: #64748b;
+    font-weight: 500;
+    position: relative;
+    padding-bottom: 0.25rem;
+}
+
+.step-badge.active {
+    color: #818cf8;
+    font-weight: 600;
+    border-bottom: 2px solid #6366f1;
+}
+
+.step-badge.completed {
+    color: #34d399;
+}
+
+/* Card hover glow */
+.job-card {
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.job-card:hover {
+    transform: translateY(-2px);
+    border-color: rgba(99, 102, 241, 0.4);
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5), 0 0 15px -3px rgba(99, 102, 241, 0.15);
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+::-webkit-scrollbar-track {
+    background: #090d16;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #1e293b;
+    border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #334155;
+}

@@ -1,0 +1,536 @@
+// State variables
+let allJobs = [];
+let activeTier = 'all';
+let activeCategory = 'all';
+let currentSession = null;
+let currentJobForInterview = null;
+let currentAppPack = null;
+let debounceTimer = null;
+
+// On load
+document.addEventListener('DOMContentLoaded', () => {
+    loadSettings();
+    loadProfile();
+    loadJobs();
+});
+
+// Load jobs from API
+async function loadJobs() {
+    try {
+        const queryParams = new URLSearchParams();
+        if (activeTier !== 'all') queryParams.append('tier', activeTier);
+        if (activeCategory !== 'all') queryParams.append('category', activeCategory);
+        
+        const searchVal = document.getElementById('input-search').value.trim();
+        if (searchVal) queryParams.append('search', searchVal);
+
+        const res = await fetch(`/api/jobs?${queryParams.toString()}`);
+        const data = await res.json();
+        allJobs = data.jobs || [];
+
+        // If zero jobs in DB, auto-trigger first scan
+        if (allJobs.length === 0 && !searchVal && activeTier === 'all' && activeCategory === 'all') {
+            await triggerScan();
+            return;
+        }
+
+        renderJobs(allJobs);
+    } catch (e) {
+        console.error("Failed to load jobs", e);
+        showToast("Error loading gigs: " + e.message);
+    }
+}
+
+// Render Job Cards
+function renderJobs(jobs) {
+    const container = document.getElementById('jobs-container');
+    const emptyState = document.getElementById('empty-state');
+    const totalCountEl = document.getElementById('count-total');
+    const matchCountEl = document.getElementById('count-matched');
+
+    totalCountEl.textContent = jobs.length;
+    const highMatchCount = jobs.filter(j => j.match_score >= 70).length;
+    matchCountEl.textContent = highMatchCount;
+
+    if (jobs.length === 0) {
+        container.innerHTML = '';
+        emptyState.classList.remove('hidden');
+        return;
+    }
+
+    emptyState.classList.add('hidden');
+
+    container.innerHTML = jobs.map(job => {
+        // Tier color
+        let tierColor = 'bg-slate-800 text-slate-300 border-slate-700';
+        if (job.tier.includes('Microtask')) {
+            tierColor = 'bg-emerald-950/70 text-emerald-300 border-emerald-800/80';
+        } else if (job.tier.includes('Mid-Tier')) {
+            tierColor = 'bg-blue-950/70 text-blue-300 border-blue-800/80';
+        } else if (job.tier.includes('Expert')) {
+            tierColor = 'bg-purple-950/70 text-purple-300 border-purple-800/80';
+        }
+
+        // Interview badge
+        let interviewIcon = 'bot';
+        let interviewColor = 'text-amber-400 bg-amber-950/50 border-amber-800/60';
+        if (job.requires_interview.includes('Direct')) {
+            interviewIcon = 'zap';
+            interviewColor = 'text-emerald-400 bg-emerald-950/50 border-emerald-800/60';
+        } else if (job.requires_interview.includes('Test')) {
+            interviewIcon = 'file-code';
+            interviewColor = 'text-cyan-400 bg-cyan-950/50 border-cyan-800/60';
+        }
+
+        // Match Score pill
+        let matchScoreClass = 'bg-slate-800 text-slate-400 border-slate-700';
+        if (job.match_score >= 80) {
+            matchScoreClass = 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40';
+        } else if (job.match_score >= 50) {
+            matchScoreClass = 'bg-indigo-500/20 text-indigo-300 border-indigo-500/40';
+        }
+
+        // Status badge
+        const isApplied = job.application_status === 'applied';
+
+        return `
+        <div class="job-card bg-slate-900/80 border border-slate-800 rounded-2xl p-5 flex flex-col justify-between shadow-sm relative group">
+            <div class="space-y-3">
+                <!-- Header row: Company & Badges -->
+                <div class="flex items-start justify-between gap-2">
+                    <div>
+                        <span class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block">${escapeHtml(job.company)}</span>
+                        <h3 class="text-base font-bold text-slate-100 group-hover:text-indigo-300 transition line-clamp-1">${escapeHtml(job.title)}</h3>
+                    </div>
+                    <button onclick="toggleSave('${job.id}')" class="text-slate-500 hover:text-amber-400 transition p-1">
+                        <i data-lucide="bookmark" class="w-4 h-4 ${job.is_saved ? 'fill-amber-400 text-amber-400' : ''}"></i>
+                    </button>
+                </div>
+
+                <!-- Badges: Compensation & Requirements -->
+                <div class="flex flex-wrap items-center gap-1.5 text-xs">
+                    <span class="px-2.5 py-0.5 rounded-full font-semibold border ${tierColor}">
+                        ${escapeHtml(job.compensation)}
+                    </span>
+                    <span class="px-2.5 py-0.5 rounded-full font-medium border flex items-center space-x-1 ${interviewColor}">
+                        <i data-lucide="${interviewIcon}" class="w-3 h-3"></i>
+                        <span>${escapeHtml(job.requires_interview)}</span>
+                    </span>
+                    <span class="px-2.5 py-0.5 rounded-full font-medium border bg-slate-800/80 text-slate-300 border-slate-700">
+                        ${escapeHtml(job.category)}
+                    </span>
+                </div>
+
+                <!-- Match Score & Skills -->
+                <div class="flex items-center justify-between text-xs pt-1">
+                    <div class="flex items-center space-x-1 px-2 py-0.5 rounded-md border font-semibold ${matchScoreClass}">
+                        <i data-lucide="sparkles" class="w-3 h-3"></i>
+                        <span>${job.match_score}% Match</span>
+                    </div>
+                    <span class="text-slate-500 text-[11px]">${escapeHtml(job.location || 'Remote')}</span>
+                </div>
+
+                <!-- Matching Skills tags -->
+                ${job.matching_skills && job.matching_skills.length > 0 ? `
+                <div class="flex flex-wrap gap-1 text-[10px]">
+                    ${job.matching_skills.slice(0, 3).map(s => `<span class="bg-slate-950 text-indigo-300 border border-slate-800 px-2 py-0.5 rounded">${escapeHtml(s)}</span>`).join('')}
+                    ${job.matching_skills.length > 3 ? `<span class="text-slate-500 px-1">+${job.matching_skills.length - 3}</span>` : ''}
+                </div>` : ''}
+
+                <!-- Short description preview -->
+                <p class="text-xs text-slate-400 line-clamp-2 leading-relaxed">
+                    ${escapeHtml(job.description || 'High-demand dataset annotation and evaluation contract.')}
+                </p>
+            </div>
+
+            <!-- Footer Action Buttons -->
+            <div class="pt-4 mt-3 border-t border-slate-800/80 flex items-center justify-between gap-2">
+                <!-- 1-Click Application Pack -->
+                <button onclick="openAppPackModal('${job.id}')" class="flex-1 flex items-center justify-center space-x-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-medium py-2 rounded-xl border border-slate-700 transition">
+                    <i data-lucide="clipboard" class="w-3.5 h-3.5 text-indigo-400"></i>
+                    <span>Quick Pack</span>
+                </button>
+
+                <!-- Interview Prep & Simulator -->
+                <button onclick="startInterview('${job.id}')" class="flex-1 flex items-center justify-center space-x-1.5 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold py-2 rounded-xl transition shadow-indigo-600/20 shadow-sm active:scale-95">
+                    <i data-lucide="message-square" class="w-3.5 h-3.5"></i>
+                    <span>Prep Interview</span>
+                </button>
+
+                <!-- External Apply Link -->
+                <a href="${escapeHtml(job.url)}" target="_blank" class="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700 transition" title="Go to application page">
+                    <i data-lucide="external-link" class="w-3.5 h-3.5"></i>
+                </a>
+            </div>
+        </div>
+        `;
+    }).join('');
+
+    lucide.createIcons();
+}
+
+// Trigger Live Scan
+async function triggerScan() {
+    const btn = document.getElementById('btn-scan');
+    const icon = document.getElementById('scan-icon');
+    const text = document.getElementById('scan-text');
+
+    btn.disabled = true;
+    icon.classList.add('animate-spin');
+    text.textContent = 'Scanning 40+ Portals...';
+
+    try {
+        const res = await fetch('/api/scan', { method: 'POST' });
+        const data = await res.json();
+        showToast(`Scan complete! Fetched ${data.total_jobs} active gigs.`);
+        await loadJobs();
+    } catch (e) {
+        console.error(e);
+        showToast('Scan failed: ' + e.message);
+    } finally {
+        btn.disabled = false;
+        icon.classList.remove('animate-spin');
+        text.textContent = 'Scan Now';
+    }
+}
+
+// Search debounce
+function debounceFilter() {
+    clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(() => {
+        loadJobs();
+    }, 300);
+}
+
+// Filter pills
+function setTierFilter(tier) {
+    activeTier = tier;
+    document.querySelectorAll('.tier-pill').forEach(el => {
+        if (el.getAttribute('data-tier') === tier) el.classList.add('active');
+        else el.classList.remove('active');
+    });
+    loadJobs();
+}
+
+function setCategoryFilter(cat) {
+    activeCategory = cat;
+    document.querySelectorAll('.cat-pill').forEach(el => {
+        if (el.getAttribute('data-cat') === cat) el.classList.add('active');
+        else el.classList.remove('active');
+    });
+    loadJobs();
+}
+
+// Toggle Bookmark / Saved
+async function toggleSave(jobId) {
+    try {
+        const res = await fetch(`/api/jobs/${jobId}/toggle-save`, { method: 'POST' });
+        const data = await res.json();
+        const job = allJobs.find(j => j.id === jobId);
+        if (job) job.is_saved = data.is_saved;
+        renderJobs(allJobs);
+        showToast(data.is_saved ? 'Job bookmarked!' : 'Removed from bookmarks');
+    } catch (e) {
+        showToast('Error saving job');
+    }
+}
+
+// Open 1-Click Application Pack Modal
+async function openAppPackModal(jobId) {
+    try {
+        const res = await fetch(`/api/jobs/${jobId}/application-pack`);
+        const pack = await res.json();
+        currentAppPack = pack;
+
+        document.getElementById('pack-role').textContent = `${pack.role_title} at ${pack.company}`;
+        document.getElementById('pack-why').value = pack.why_interested;
+        document.getElementById('pack-exp').value = pack.relevant_experience;
+        document.getElementById('pack-qa').value = pack.quality_assurance_strategy;
+        document.getElementById('pack-apply-link').href = pack.apply_url;
+
+        openModal('modal-app-pack');
+    } catch (e) {
+        showToast('Error generating application pack');
+    }
+}
+
+// Copy Full Pack to Clipboard
+function copyFullPack() {
+    if (!currentAppPack) return;
+    navigator.clipboard.writeText(currentAppPack.one_click_bundle);
+    showToast('Copied full application pack & answers to clipboard!');
+}
+
+// --- AI INTERVIEW SIMULATOR ROOM ---
+
+async function startInterview(jobId) {
+    const job = allJobs.find(j => j.id === jobId);
+    if (!job) return;
+    currentJobForInterview = job;
+
+    document.getElementById('interview-title').textContent = `${job.company} AI Interview Simulator`;
+    document.getElementById('interview-role').textContent = `Role: ${job.title} (${job.requires_interview})`;
+    document.getElementById('chat-history').innerHTML = `
+        <div class="flex items-center justify-center p-8 text-slate-400 space-x-2 text-xs">
+            <i data-lucide="loader" class="w-4 h-4 animate-spin"></i>
+            <span>Initializing simulated assessment with ${escapeHtml(job.company)} Lead Interviewer...</span>
+        </div>
+    `;
+    lucide.createIcons();
+    openModal('modal-interview');
+
+    try {
+        const res = await fetch('/api/interview/start', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ job_id: jobId })
+        });
+        const session = await res.json();
+        currentSession = session;
+        renderInterviewState();
+    } catch (e) {
+        showToast('Failed to start interview: ' + e.message);
+    }
+}
+
+function renderInterviewState() {
+    if (!currentSession) return;
+
+    // Update Round Stepper
+    for (let i = 1; i <= 5; i++) {
+        const stepEl = document.getElementById(`step-${i}`);
+        if (!stepEl) continue;
+        stepEl.className = 'step-badge';
+        if (i < currentSession.current_round) {
+            stepEl.classList.add('completed');
+        } else if (i === currentSession.current_round) {
+            stepEl.classList.add('active');
+        }
+    }
+
+    if (currentSession.is_completed) {
+        const scoreBadge = document.getElementById('interview-score-badge');
+        scoreBadge.classList.remove('hidden');
+        document.getElementById('overall-score-val').textContent = currentSession.overall_score;
+    } else {
+        document.getElementById('interview-score-badge').classList.add('hidden');
+    }
+
+    // Render Chat Messages
+    const container = document.getElementById('chat-history');
+    container.innerHTML = currentSession.messages.map(m => {
+        const isAi = m.sender === 'ai';
+        return `
+        <div class="flex flex-col ${isAi ? 'items-start' : 'items-end'} space-y-1">
+            <span class="text-[10px] text-slate-500 font-semibold px-1">${isAi ? `${currentSession.company} Interviewer` : 'You (Candidate)'}</span>
+            <div class="max-w-[85%] rounded-2xl p-4 text-xs leading-relaxed ${isAi ? 'bg-slate-900 border border-slate-800 text-slate-200' : 'bg-indigo-600 text-white shadow-md'}">
+                <div class="whitespace-pre-line">${escapeHtml(m.message)}</div>
+
+                ${m.feedback ? `
+                <div class="mt-3 pt-2.5 border-t border-slate-800/80 text-[11px] text-indigo-300 bg-slate-950/60 p-2.5 rounded-xl">
+                    <div class="flex items-center space-x-1 font-semibold mb-0.5">
+                        <i data-lucide="award" class="w-3.5 h-3.5 text-amber-400"></i>
+                        <span>Round Score: ${m.score || 8}/10</span>
+                    </div>
+                    <div>${escapeHtml(m.feedback)}</div>
+                </div>` : ''}
+            </div>
+        </div>
+        `;
+    }).join('');
+
+    container.scrollTop = container.scrollHeight;
+    lucide.createIcons();
+
+    // Populate hint if available
+    const lastAiMsg = [...currentSession.messages].reverse().find(m => m.sender === 'ai');
+    if (lastAiMsg && lastAiMsg.suggested_answer) {
+        document.getElementById('hint-box').innerHTML = `
+            <strong>Rubric & Ideal Answer:</strong><br>
+            ${escapeHtml(lastAiMsg.suggested_answer)}
+        `;
+    }
+}
+
+async function sendInterviewReply() {
+    const input = document.getElementById('chat-input');
+    const msg = input.value.trim();
+    if (!msg || !currentSession) return;
+
+    input.value = '';
+    const btn = document.getElementById('btn-send-reply');
+    btn.disabled = true;
+
+    // Optimistically render candidate reply
+    currentSession.messages.push({
+        sender: 'user',
+        message: msg,
+        round_number: currentSession.current_round
+    });
+    renderInterviewState();
+
+    try {
+        const res = await fetch('/api/interview/chat', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                session_id: currentSession.session_id,
+                job_id: currentSession.job_id,
+                user_message: msg
+            })
+        });
+        const updated = await res.json();
+        currentSession = updated;
+        renderInterviewState();
+    } catch (e) {
+        showToast('Error communicating with interviewer: ' + e.message);
+    } finally {
+        btn.disabled = false;
+    }
+}
+
+function toggleHint() {
+    const hint = document.getElementById('hint-box');
+    hint.classList.toggle('hidden');
+}
+
+// Copy Master Prompt for external AI practice
+async function copyMasterPrompt() {
+    if (!currentJobForInterview) return;
+    try {
+        const res = await fetch(`/api/jobs/${currentJobForInterview.id}/application-pack`);
+        const pack = await res.json();
+        navigator.clipboard.writeText(pack.master_interview_prompt);
+        showToast('Master Interview Prompt copied! Paste into Antigravity or ChatGPT to practice externally.');
+    } catch (e) {
+        showToast('Error copying prompt');
+    }
+}
+
+// --- PROFILE & RESUME LOGIC ---
+
+async function loadProfile() {
+    try {
+        const res = await fetch('/api/profile');
+        const profile = await res.json();
+        document.getElementById('profile-skills').value = (profile.skills || []).join(', ');
+        document.getElementById('profile-text').value = profile.resume_text || '';
+    } catch (e) {
+        console.error("Failed to load profile", e);
+    }
+}
+
+async function saveUserProfile() {
+    const skills = document.getElementById('profile-skills').value.split(',').map(s => s.trim()).filter(Boolean);
+    const resume_text = document.getElementById('profile-text').value;
+
+    try {
+        await fetch('/api/profile', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                name: 'Candidate',
+                skills: skills,
+                resume_text: resume_text
+            })
+        });
+        closeModal('modal-resume');
+        showToast('Profile updated & skills saved!');
+        await loadJobs(); // Re-rank with updated skills
+    } catch (e) {
+        showToast('Error saving profile');
+    }
+}
+
+async function uploadResumeFile(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const formData = new FormData();
+    formData.append('file', file);
+
+    showToast(`Parsing ${file.name}...`);
+
+    try {
+        const res = await fetch('/api/profile/upload-resume', {
+            method: 'POST',
+            body: formData
+        });
+        const data = await res.json();
+        showToast(data.message);
+        await loadProfile();
+        await loadJobs();
+    } catch (e) {
+        showToast('Failed to parse resume: ' + e.message);
+    }
+}
+
+// --- SETTINGS LOGIC ---
+
+async function loadSettings() {
+    try {
+        const res = await fetch('/api/settings');
+        const settings = await res.json();
+        if (settings.gemini_api_key_set) {
+            document.getElementById('setting-gemini-key').placeholder = settings.gemini_api_key_masked;
+        }
+        document.getElementById('setting-model').value = settings.gemini_model || 'gemini-2.5-flash';
+        document.getElementById('setting-offline').checked = settings.offline_mode;
+    } catch (e) {
+        console.error("Failed to load settings", e);
+    }
+}
+
+async function saveAppSettings() {
+    const key = document.getElementById('setting-gemini-key').value.trim();
+    const model = document.getElementById('setting-model').value;
+    const offline = document.getElementById('setting-offline').checked;
+
+    try {
+        await fetch('/api/settings', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                gemini_api_key: key || undefined,
+                gemini_model: model,
+                offline_mode: offline
+            })
+        });
+        closeModal('modal-settings');
+        showToast('AI Settings updated successfully!');
+    } catch (e) {
+        showToast('Error saving settings');
+    }
+}
+
+// --- MODAL UTILITIES ---
+
+function openModal(id) {
+    const modal = document.getElementById(id);
+    if (modal) modal.classList.remove('hidden');
+}
+
+function closeModal(id) {
+    const modal = document.getElementById(id);
+    if (modal) modal.classList.add('hidden');
+}
+
+function showToast(msg) {
+    const toast = document.getElementById('toast');
+    const msgEl = document.getElementById('toast-msg');
+    msgEl.textContent = msg;
+    toast.classList.remove('hidden');
+    setTimeout(() => {
+        toast.classList.add('hidden');
+    }, 3500);
+}
+
+function escapeHtml(str) {
+    if (!str) return '';
+    return str
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}

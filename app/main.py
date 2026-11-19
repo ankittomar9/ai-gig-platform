@@ -1,0 +1,194 @@
+import os
+import shutil
+from pathlib import Path
+from fastapi import FastAPI, HTTPException, UploadFile, File, Form, Query
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse, JSONResponse
+from fastapi.middleware.cors import CORSMiddleware
+from typing import Optional, List, Dict, Any
+
+from app.config import STATIC_DIR, DATA_DIR
+from app.database import (
+    init_db, get_all_jobs, get_job_by_id, update_job_status,
+    toggle_save_job, get_user_profile, update_user_profile,
+    get_settings, set_setting, get_interview_session
+)
+from app.models import (
+    JobStatusUpdate, SettingsUpdate, UserProfile,
+    InterviewChatRequest
+)
+from app.scrapers.runner import run_full_scan
+from app.services.matcher import extract_text_from_file, extract_skills_from_text, calculate_match_score
+from app.services.application_pack import generate_application_pack
+from app.services.interview_agent import start_new_interview, process_interview_reply
+
+# Initialize database on startup
+init_db()
+
+app = FastAPI(
+    title="AI Gig Hunter & Interview Simulator",
+    description="Unified platform for AI training jobs, 1-click application packs, and interactive AI interview prep.",
+    version="1.0.0"
+)
+
+# Enable CORS
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# Mount static files
+app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
+
+@app.get("/")
+async def root():
+    index_file = STATIC_DIR / "index.html"
+    if index_file.exists():
+        return FileResponse(index_file)
+    return {"message": "AI Gig Hunter API is running. Visit /docs for API documentation."}
+
+@app.post("/api/scan")
+async def trigger_scan():
+    """Trigger parallel scan across all ATS feeds & platforms"""
+    try:
+        summary = await run_full_scan()
+        return summary
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/jobs")
+async def list_jobs(
+    tier: Optional[str] = Query(None),
+    category: Optional[str] = Query(None),
+    interview_type: Optional[str] = Query(None),
+    search: Optional[str] = Query(None)
+):
+    """Retrieve jobs with optional filtering"""
+    jobs = get_all_jobs(tier=tier, category=category, interview_type=interview_type, search=search)
+    return {"count": len(jobs), "jobs": jobs}
+
+@app.get("/api/jobs/{job_id}")
+async def get_job(job_id: str):
+    job = get_job_by_id(job_id)
+    if not job:
+        raise HTTPException(status_code=404, detail="Job not found")
+    return job
+
+@app.post("/api/jobs/{job_id}/status")
+async def update_status(job_id: str, payload: JobStatusUpdate):
+    job = get_job_by_id(job_id)
+    if not job:
+        raise HTTPException(status_code=404, detail="Job not found")
+    update_job_status(job_id, payload.status)
+    return {"status": "success", "job_id": job_id, "new_status": payload.status}
+
+@app.post("/api/jobs/{job_id}/toggle-save")
+async def toggle_save(job_id: str):
+    job = get_job_by_id(job_id)
+    if not job:
+        raise HTTPException(status_code=404, detail="Job not found")
+    new_state = toggle_save_job(job_id)
+    return {"status": "success", "job_id": job_id, "is_saved": new_state}
+
+@app.get("/api/jobs/{job_id}/application-pack")
+async def get_application_pack(job_id: str):
+    job = get_job_by_id(job_id)
+    if not job:
+        raise HTTPException(status_code=404, detail="Job not found")
+    profile = get_user_profile()
+    pack = generate_application_pack(job, profile)
+    return pack
+
+@app.post("/api/interview/start")
+async def start_interview(payload: Dict[str, str]):
+    job_id = payload.get("job_id")
+    if not job_id:
+        raise HTTPException(status_code=400, detail="job_id is required")
+    try:
+        session = await start_new_interview(job_id)
+        return session
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/interview/chat")
+async def interview_chat(payload: InterviewChatRequest):
+    try:
+        session = await process_interview_reply(payload.session_id, payload.user_message)
+        return session
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/interview/{session_id}")
+async def get_interview(session_id: str):
+    session = get_interview_session(session_id)
+    if not session:
+        raise HTTPException(status_code=404, detail="Session not found")
+    return session
+
+@app.get("/api/profile")
+async def get_profile():
+    return get_user_profile()
+
+@app.post("/api/profile")
+async def save_profile(profile: UserProfile):
+    update_user_profile(profile.model_dump())
+    return {"status": "success", "profile": get_user_profile()}
+
+@app.post("/api/profile/upload-resume")
+async def upload_resume(file: UploadFile = File(...)):
+    """Upload resume document (.docx, .txt, .md), auto-extract skills & update profile"""
+    temp_path = DATA_DIR / f"temp_{file.filename}"
+    try:
+        with open(temp_path, "wb") as buffer:
+            shutil.copyfileobj(file.file, buffer)
+
+        extracted_text = extract_text_from_file(temp_path)
+        if not extracted_text:
+            raise HTTPException(status_code=400, detail="Could not read text from uploaded file.")
+
+        skills = extract_skills_from_text(extracted_text)
+        current = get_user_profile()
+        merged_skills = sorted(list(set(current.get("skills", []) + skills)))
+
+        current["resume_text"] = extracted_text
+        current["skills"] = merged_skills
+        update_user_profile(current)
+
+        return {
+            "status": "success",
+            "message": f"Successfully parsed {len(skills)} skills from {file.filename}!",
+            "extracted_skills": skills,
+            "profile": current
+        }
+    finally:
+        if temp_path.exists():
+            os.remove(temp_path)
+
+@app.get("/api/settings")
+async def get_app_settings():
+    settings = get_settings()
+    # Mask API key for security
+    raw_key = settings.get("gemini_api_key", "")
+    masked_key = f"{raw_key[:4]}...{raw_key[-4:]}" if len(raw_key) > 8 else ("Set" if raw_key else "Not set")
+    return {
+        "gemini_api_key_set": bool(raw_key),
+        "gemini_api_key_masked": masked_key,
+        "gemini_model": settings.get("gemini_model", "gemini-2.5-flash"),
+        "offline_mode": settings.get("offline_mode", "false").lower() == "true",
+        "minimum_rate": float(settings.get("minimum_rate", 0))
+    }
+
+@app.post("/api/settings")
+async def update_app_settings(payload: SettingsUpdate):
+    if payload.gemini_api_key is not None:
+        set_setting("gemini_api_key", payload.gemini_api_key.strip())
+    if payload.gemini_model is not None:
+        set_setting("gemini_model", payload.gemini_model)
+    if payload.offline_mode is not None:
+        set_setting("offline_mode", str(payload.offline_mode).lower())
+    if payload.minimum_rate is not None:
+        set_setting("minimum_rate", str(payload.minimum_rate))
+    return {"status": "success", "message": "Settings saved successfully"}

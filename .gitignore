@@ -1,0 +1,10 @@
+venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.env
+data/gighunter.db
+data/user_resume.*
+.DS_Store
+Thumbs.db
