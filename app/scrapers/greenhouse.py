@@ -32,7 +32,7 @@ class GreenhouseScraper(BaseScraper):
                             location = loc_dict.get("name", "Remote") if isinstance(loc_dict, dict) else "Remote"
                             apply_url = j.get("absolute_url") or f"https://boards.greenhouse.io/{slug}/jobs/{j.get('id')}"
 
-                            comp_info = parse_compensation(title, board["default_tier"])
+                            comp_info = parse_compensation(title)
                             category = detect_category(title, "")
                             interview_type = detect_interview_type(title, "", company)
 

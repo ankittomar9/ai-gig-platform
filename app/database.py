@@ -218,8 +218,8 @@ def save_or_update_jobs(jobs: List[Dict[str, Any]]):
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """, (
             j["id"], j["platform"], j["title"], j["company"], j["url"],
-            j.get("compensation", "Unspecified"), j.get("comp_min", 0.0), j.get("comp_max", 0.0),
-            j.get("comp_unit", "hr"), j.get("tier", "Mid-Tier ($15-$30)"), j.get("category", "Generalist"),
+            j.get("compensation", "Not listed"), j.get("comp_min", 0.0), j.get("comp_max", 0.0),
+            j.get("comp_unit", "hr"), j.get("tier", "Pay Not Listed"), j.get("category", "Generalist"),
             j.get("location", "Remote"), j.get("requires_interview", "AI Interview"),
             j.get("description", ""), j.get("match_score", 0), skills_json,
             now, is_saved, app_status, int(min_exp), str(exp_label),

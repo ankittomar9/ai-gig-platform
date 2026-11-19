@@ -319,4 +319,10 @@ class DirectPlatformScraper(BaseScraper):
         super().__init__("Direct AI Platforms")
 
     async def fetch_jobs(self) -> List[Dict[str, Any]]:
-        return DIRECT_PLATFORM_POSTS
+        results = []
+        for post in DIRECT_PLATFORM_POSTS:
+            item = dict(post)
+            if not item["compensation"].endswith("(estimate)"):
+                item["compensation"] = f"{item['compensation']} (estimate)"
+            results.append(item)
+        return results
