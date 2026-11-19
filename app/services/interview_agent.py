@@ -117,7 +117,7 @@ async def process_interview_reply(session_id: str, user_reply: str) -> Dict[str,
 
     ai_response = None
     if not offline_mode and api_key:
-        model_name = settings.get("gemini_model") or os.getenv("GEMINI_MODEL") or "gemini-2.5-flash"
+        model_name = settings.get("gemini_model") or os.getenv("GEMINI_MODEL") or "gemini-3.8-flash"
         try:
             ai_response = await _call_gemini_interview(job, session, user_reply, api_key, model_name)
             session["is_offline_fallback"] = False

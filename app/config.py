@@ -20,7 +20,7 @@ STATIC_DIR = BASE_DIR / "app" / "static"
 
 DEFAULT_SETTINGS = {
     "gemini_api_key": os.getenv("GEMINI_API_KEY", ""),
-    "gemini_model": os.getenv("GEMINI_MODEL", "gemini-2.5-flash"),
+    "gemini_model": os.getenv("GEMINI_MODEL", "gemini-3.8-flash"),
     "offline_mode": os.getenv("OFFLINE_MODE", "false").lower() == "true",
     "target_roles": ["AI Trainer", "RLHF Specialist", "Prompt Engineer", "Code Reviewer", "Domain Expert", "Data Annotator"],
     "minimum_rate": 0
