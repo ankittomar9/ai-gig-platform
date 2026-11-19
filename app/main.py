@@ -25,6 +25,7 @@ from app.services.interview_agent import start_new_interview, process_interview_
 from app.services.resume_generator import generate_tailored_resume
 from app.services.speech import check_whisper_status, transcribe_audio_bytes
 from app.services.humanizer import humanize_resume_text
+from app.services.interview_packet import generate_interview_packet
 
 # Initialize database on startup
 init_db()
@@ -115,6 +116,16 @@ async def get_job_tailored_resume(job_id: str, humanize: bool = True):
         if humanize:
             resume_data["formatted_resume"] = humanize_resume_text(resume_data["formatted_resume"])
         return resume_data
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/jobs/{job_id}/interview-packet")
+async def get_job_interview_packet(job_id: str):
+    """Generate a comprehensive role-specific interview preparation packet (Questions, A+ Answers, and Rubric)"""
+    profile = get_user_profile()
+    try:
+        packet = generate_interview_packet(job_id, profile)
+        return packet
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

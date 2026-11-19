@@ -150,19 +150,25 @@ function renderJobs(jobs) {
             <!-- Footer Action Buttons -->
             <div class="pt-4 mt-3 border-t border-slate-800/80 flex items-center justify-between gap-2">
                 <!-- 1-Click Application Pack -->
-                <button onclick="openAppPackModal('${job.id}')" class="flex-1 flex items-center justify-center space-x-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-medium py-2 rounded-xl border border-slate-700 transition">
+                <button onclick="openAppPackModal('${job.id}')" class="flex-1 flex items-center justify-center space-x-1 bg-slate-800 hover:bg-slate-700 text-slate-200 text-[11px] font-medium py-2 rounded-xl border border-slate-700 transition" title="Tailored answers & resume">
                     <i data-lucide="clipboard" class="w-3.5 h-3.5 text-indigo-400"></i>
                     <span>Quick Pack</span>
                 </button>
 
-                <!-- Interview Prep & Simulator -->
-                <button onclick="startInterview('${job.id}')" class="flex-1 flex items-center justify-center space-x-1.5 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold py-2 rounded-xl transition shadow-indigo-600/20 shadow-sm active:scale-95">
-                    <i data-lucide="message-square" class="w-3.5 h-3.5"></i>
-                    <span>Prep Interview</span>
+                <!-- Role Interview Packet -->
+                <button onclick="openInterviewPacketModal('${job.id}')" class="flex-1 flex items-center justify-center space-x-1 bg-slate-800 hover:bg-slate-700 text-slate-200 text-[11px] font-medium py-2 rounded-xl border border-slate-700 transition" title="Predicted Q&A and rubric cheatsheet">
+                    <i data-lucide="book-open" class="w-3.5 h-3.5 text-amber-400"></i>
+                    <span>Packet</span>
+                </button>
+
+                <!-- Interview Voice Simulator -->
+                <button onclick="startInterview('${job.id}')" class="flex-1 flex items-center justify-center space-x-1 bg-indigo-600 hover:bg-indigo-500 text-white text-[11px] font-semibold py-2 rounded-xl transition shadow-indigo-600/20 shadow-sm active:scale-95" title="Start voice interview simulation">
+                    <i data-lucide="mic" class="w-3.5 h-3.5"></i>
+                    <span>Practice</span>
                 </button>
 
                 <!-- External Apply Link -->
-                <a href="${escapeHtml(job.url)}" target="_blank" class="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700 transition" title="Go to application page">
+                <a href="${escapeHtml(job.url)}" target="_blank" class="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700 transition" title="Open application page">
                     <i data-lucide="external-link" class="w-3.5 h-3.5"></i>
                 </a>
             </div>
@@ -299,6 +305,69 @@ function copyFullPack() {
     if (!currentAppPack) return;
     navigator.clipboard.writeText(currentAppPack.one_click_bundle);
     showToast('Copied full application pack & answers to clipboard!');
+}
+
+// --- ROLE INTERVIEW PACKET ---
+let currentInterviewPacket = null;
+let currentPacketJobId = null;
+
+async function openInterviewPacketModal(jobId) {
+    try {
+        currentPacketJobId = jobId;
+        showToast('Generating role interview packet...');
+        const res = await fetch(`/api/jobs/${jobId}/interview-packet`);
+        const packet = await res.json();
+        currentInterviewPacket = packet;
+
+        document.getElementById('packet-role-title').textContent = `${packet.role_title} Dossier`;
+        document.getElementById('packet-company-subtitle').textContent = `Target Platform: ${packet.company} (${packet.category})`;
+        document.getElementById('packet-focus-text').textContent = packet.company_focus;
+
+        const qaContainer = document.getElementById('packet-qa-container');
+        qaContainer.innerHTML = (packet.questions_and_answers || []).map((qa, idx) => `
+            <div class="bg-slate-950 border border-slate-800 rounded-xl p-3.5 space-y-2">
+                <div class="flex items-center justify-between text-xs">
+                    <span class="font-bold text-indigo-400">${escapeHtml(qa.round)}</span>
+                    <button onclick="copySingleQa(${idx})" class="text-[11px] text-slate-400 hover:text-white flex items-center space-x-1">
+                        <i data-lucide="copy" class="w-3 h-3"></i>
+                        <span>Copy Answer</span>
+                    </button>
+                </div>
+                <p class="font-semibold text-xs text-slate-200">Q: ${escapeHtml(qa.question)}</p>
+                <div class="bg-slate-900/90 border border-slate-800/80 p-2.5 rounded-lg text-xs text-slate-300 leading-relaxed">
+                    <strong class="text-emerald-400 text-[11px] block mb-1">A+ Grounded Formulation:</strong>
+                    "${escapeHtml(qa.winning_answer)}"
+                </div>
+            </div>
+        `).join('');
+
+        openModal('modal-interview-packet');
+        lucide.createIcons();
+    } catch (e) {
+        showToast('Error loading interview packet: ' + e.message);
+    }
+}
+
+function copyFullInterviewPacket() {
+    if (!currentInterviewPacket) return;
+    navigator.clipboard.writeText(currentInterviewPacket.full_packet_text);
+    showToast('Copied full interview dossier to clipboard!');
+}
+
+function copySingleQa(idx) {
+    if (!currentInterviewPacket || !currentInterviewPacket.questions_and_answers) return;
+    const item = currentInterviewPacket.questions_and_answers[idx];
+    if (item) {
+        navigator.clipboard.writeText(item.winning_answer);
+        showToast(`Copied winning answer for ${item.round}!`);
+    }
+}
+
+function startInterviewFromPacket() {
+    closeModal('modal-interview-packet');
+    if (currentPacketJobId) {
+        startInterview(currentPacketJobId);
+    }
 }
 
 // --- AI INTERVIEW SIMULATOR ROOM ---
