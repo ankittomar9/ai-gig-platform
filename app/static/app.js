@@ -5,12 +5,15 @@ let activeCategory = 'all';
 let currentSession = null;
 let currentJobForInterview = null;
 let currentAppPack = null;
+let currentTailoredResume = null;
+let allPersonas = [];
 let debounceTimer = null;
 
 // On load
 document.addEventListener('DOMContentLoaded', () => {
     loadSettings();
     loadProfile();
+    loadPersonas();
     loadJobs();
 });
 
@@ -238,6 +241,9 @@ async function toggleSave(jobId) {
 // Open 1-Click Application Pack Modal
 async function openAppPackModal(jobId) {
     try {
+        switchPackTab('answers'); // default to answers tab
+
+        // Fetch application pack answers
         const res = await fetch(`/api/jobs/${jobId}/application-pack`);
         const pack = await res.json();
         currentAppPack = pack;
@@ -248,10 +254,43 @@ async function openAppPackModal(jobId) {
         document.getElementById('pack-qa').value = pack.quality_assurance_strategy;
         document.getElementById('pack-apply-link').href = pack.apply_url;
 
+        // Fetch dynamically tailored ATS resume
+        const resResume = await fetch(`/api/jobs/${jobId}/tailored-resume`);
+        const resumeData = await resResume.json();
+        currentTailoredResume = resumeData;
+        document.getElementById('pack-tailored-resume').value = resumeData.formatted_resume;
+
         openModal('modal-app-pack');
     } catch (e) {
         showToast('Error generating application pack');
     }
+}
+
+// Switch tabs inside Pack Modal
+function switchPackTab(tab) {
+    const tabAnswers = document.getElementById('tab-content-answers');
+    const tabResume = document.getElementById('tab-content-resume');
+    const btnAnswers = document.getElementById('tab-btn-answers');
+    const btnResume = document.getElementById('tab-btn-resume');
+
+    if (tab === 'answers') {
+        tabAnswers.classList.remove('hidden');
+        tabResume.classList.add('hidden');
+        btnAnswers.className = 'font-semibold text-indigo-400 border-b-2 border-indigo-500 pb-1 px-2';
+        btnResume.className = 'font-semibold text-slate-400 hover:text-slate-200 pb-1 px-2';
+    } else {
+        tabAnswers.classList.add('hidden');
+        tabResume.classList.remove('hidden');
+        btnResume.className = 'font-semibold text-indigo-400 border-b-2 border-indigo-500 pb-1 px-2';
+        btnAnswers.className = 'font-semibold text-slate-400 hover:text-slate-200 pb-1 px-2';
+    }
+}
+
+// Copy tailored resume to clipboard
+function copyTailoredResumeOnly() {
+    if (!currentTailoredResume) return;
+    navigator.clipboard.writeText(currentTailoredResume.formatted_resume);
+    showToast('Copied tailored ATS resume to clipboard!');
 }
 
 // Copy Full Pack to Clipboard
@@ -408,6 +447,57 @@ async function copyMasterPrompt() {
 }
 
 // --- PROFILE & RESUME LOGIC ---
+
+// --- PERSONAS & RESUME LOGIC ---
+
+async function loadPersonas() {
+    try {
+        const res = await fetch('/api/personas');
+        const data = await res.json();
+        allPersonas = data.personas || [];
+
+        const container = document.getElementById('personas-container');
+        if (!container) return;
+
+        container.innerHTML = allPersonas.map(p => {
+            const isActive = p.is_active;
+            return `
+            <div class="p-3.5 rounded-xl border ${isActive ? 'bg-indigo-950/40 border-indigo-500 shadow-sm' : 'bg-slate-950 border-slate-800'} flex flex-col justify-between space-y-2">
+                <div>
+                    <div class="flex items-center justify-between gap-2">
+                        <h4 class="font-bold text-xs ${isActive ? 'text-indigo-300' : 'text-slate-200'}">${escapeHtml(p.title)}</h4>
+                        ${isActive ? '<span class="text-[10px] bg-indigo-500/20 text-indigo-300 border border-indigo-500/40 px-2 py-0.5 rounded-full font-semibold">Active</span>' : ''}
+                    </div>
+                    <p class="text-[11px] text-slate-400 mt-1 line-clamp-2">${escapeHtml(p.summary)}</p>
+                </div>
+                <div class="flex items-center justify-between pt-2 border-t border-slate-800/60">
+                    <span class="text-[10px] text-slate-500">${(p.skills || []).slice(0, 3).join(', ')}...</span>
+                    ${!isActive ? `
+                    <button onclick="activatePersona('${p.id}')" class="text-xs bg-slate-800 hover:bg-indigo-600 text-slate-200 hover:text-white px-2.5 py-1 rounded-lg transition font-medium">
+                        Switch
+                    </button>` : '<span class="text-[11px] text-emerald-400 font-semibold">In Use</span>'}
+                </div>
+            </div>
+            `;
+        }).join('');
+    } catch (e) {
+        console.error("Failed to load personas", e);
+    }
+}
+
+async function activatePersona(personaId) {
+    try {
+        showToast('Switching active resume persona...');
+        const res = await fetch(`/api/personas/${personaId}/activate`, { method: 'POST' });
+        await res.json();
+        await loadPersonas();
+        await loadProfile();
+        await loadJobs();
+        showToast('Persona activated! Re-scored 510 jobs with new skills.');
+    } catch (e) {
+        showToast('Error activating persona');
+    }
+}
 
 async function loadProfile() {
     try {

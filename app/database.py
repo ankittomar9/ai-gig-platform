@@ -59,6 +59,65 @@ def init_db():
     )
     """)
 
+    # Resume personas table (Multi-Resume Support)
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS resume_personas (
+        id TEXT PRIMARY KEY,
+        title TEXT,
+        category TEXT,
+        skills TEXT,
+        summary TEXT,
+        full_text TEXT,
+        is_active INTEGER DEFAULT 0
+    )
+    """)
+
+    # Seed default personas if empty
+    cursor.execute("SELECT COUNT(*) FROM resume_personas")
+    if cursor.fetchone()[0] == 0:
+        personas = [
+            (
+                "production_systems",
+                "Application Production Systems Specialist",
+                "Production & Support",
+                json.dumps(["Java", "Spring Boot", "SQL", "Docker", "GCP", "Linux", "API", "Incident Management"]),
+                "Specialist in production environments, incident triage, system uptime, and enterprise cloud operations.",
+                "Application Production Systems Specialist with experience in high-availability backend environments, incident response, Linux, and GCP operations.",
+                1
+            ),
+            (
+                "software_engineer",
+                "Software Engineer & Backend Developer",
+                "Coding",
+                json.dumps(["Python", "Java", "Spring Boot", "SQL", "Data Structures", "Algorithms", "Git", "API"]),
+                "Software engineer experienced in backend architectures, clean code implementation, debugging, and API design.",
+                "Software Engineer with hands-on experience in backend services, algorithmic problem-solving, and automated test design.",
+                0
+            ),
+            (
+                "ai_rlhf_trainer",
+                "AI Trainer & RLHF Specialist",
+                "Writing & RLHF",
+                json.dumps(["RLHF", "Prompt Engineering", "Model Evaluation", "Pairwise Ranking", "Hallucination Detection", "Quality Assurance"]),
+                "AI Trainer skilled in prompt evaluation, rubric scoring, pairwise model comparisons, and adversarial testing.",
+                "AI Trainer and Domain Evaluator focusing on alignment, ground-truth annotations, and LLM reasoning verification.",
+                0
+            ),
+            (
+                "microtask_evaluator",
+                "Data & Quality Evaluation Specialist",
+                "Generalist",
+                json.dumps(["Data Annotation", "Quality Assurance", "Guideline Compliance", "Attention to Detail", "Search Relevance"]),
+                "Detail-oriented evaluator with high accuracy on data annotation, search relevance, and digital workflow benchmarks.",
+                "Quality Evaluator specialized in strict guideline compliance, rapid verification, and multi-modal task evaluation.",
+                0
+            )
+        ]
+        cursor.executemany("""
+        INSERT INTO resume_personas (id, title, category, skills, summary, full_text, is_active)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+        """, personas)
+
     # Interview sessions table
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS interview_sessions (
@@ -285,3 +344,51 @@ def get_interview_session(session_id: str) -> Optional[Dict[str, Any]]:
     d["messages"] = json.loads(d["history"]) if d["history"] else []
     d["is_completed"] = bool(d["is_completed"])
     return d
+
+def get_all_personas() -> List[Dict[str, Any]]:
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM resume_personas ORDER BY is_active DESC, title ASC")
+    rows = cursor.fetchall()
+    conn.close()
+    result = []
+    for r in rows:
+        d = dict(r)
+        d["skills"] = json.loads(d["skills"]) if d["skills"] else []
+        d["is_active"] = bool(d["is_active"])
+        result.append(d)
+    return result
+
+def get_active_persona() -> Optional[Dict[str, Any]]:
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM resume_personas WHERE is_active = 1 LIMIT 1")
+    row = cursor.fetchone()
+    conn.close()
+    if not row:
+        return None
+    d = dict(row)
+    d["skills"] = json.loads(d["skills"]) if d["skills"] else []
+    d["is_active"] = True
+    return d
+
+def activate_persona(persona_id: str) -> bool:
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("UPDATE resume_personas SET is_active = 0")
+    cursor.execute("UPDATE resume_personas SET is_active = 1 WHERE id = ?", (persona_id,))
+    
+    # Also sync to user_profile for scoring
+    cursor.execute("SELECT * FROM resume_personas WHERE id = ?", (persona_id,))
+    row = cursor.fetchone()
+    if row:
+        cursor.execute("""
+        UPDATE user_profile SET
+            skills = ?,
+            resume_text = ?
+        WHERE id = 1
+        """, (row["skills"], row["full_text"]))
+
+    conn.commit()
+    conn.close()
+    return True

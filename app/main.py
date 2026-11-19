@@ -11,7 +11,8 @@ from app.config import STATIC_DIR, DATA_DIR
 from app.database import (
     init_db, get_all_jobs, get_job_by_id, update_job_status,
     toggle_save_job, get_user_profile, update_user_profile,
-    get_settings, set_setting, get_interview_session
+    get_settings, set_setting, get_interview_session,
+    get_all_personas, activate_persona
 )
 from app.models import (
     JobStatusUpdate, SettingsUpdate, UserProfile,
@@ -21,6 +22,7 @@ from app.scrapers.runner import run_full_scan
 from app.services.matcher import extract_text_from_file, extract_skills_from_text, calculate_match_score
 from app.services.application_pack import generate_application_pack
 from app.services.interview_agent import start_new_interview, process_interview_reply
+from app.services.resume_generator import generate_tailored_resume
 
 # Initialize database on startup
 init_db()
@@ -101,6 +103,29 @@ async def get_application_pack(job_id: str):
     profile = get_user_profile()
     pack = generate_application_pack(job, profile)
     return pack
+
+@app.get("/api/jobs/{job_id}/tailored-resume")
+async def get_job_tailored_resume(job_id: str):
+    """Dynamically generate a tailored ATS resume customized for this specific job"""
+    profile = get_user_profile()
+    try:
+        resume_data = generate_tailored_resume(job_id, profile)
+        return resume_data
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/personas")
+async def list_personas():
+    """Retrieve all available resume personas"""
+    return {"personas": get_all_personas()}
+
+@app.post("/api/personas/{persona_id}/activate")
+async def switch_persona(persona_id: str):
+    """Switch active resume persona and re-score all jobs against the new persona's skills"""
+    activate_persona(persona_id)
+    # Re-score all jobs with newly activated persona skills
+    await run_full_scan()
+    return {"status": "success", "active_persona": persona_id}
 
 @app.post("/api/interview/start")
 async def start_interview(payload: Dict[str, str]):
