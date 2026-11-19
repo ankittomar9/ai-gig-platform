@@ -14,21 +14,27 @@ COMMON_SKILLS = [
 ]
 
 def extract_text_from_file(file_path: Path) -> str:
-    """Extract text from docx or txt"""
+    """Extract text from docx or txt. Raises ValueError on failure."""
     ext = file_path.suffix.lower()
     if ext == ".docx":
         try:
             import docx
             doc = docx.Document(file_path)
-            return "\n".join([p.text for p in doc.paragraphs if p.text.strip()])
+            text = "\n".join([p.text for p in doc.paragraphs if p.text.strip()])
+            if not text.strip():
+                raise ValueError("The uploaded .docx document contains no extractable text.")
+            return text
         except Exception as e:
-            return f"Error reading docx: {e}"
+            raise ValueError(f"Failed to extract text from .docx file: {e}")
     elif ext in [".txt", ".md"]:
         try:
-            return file_path.read_text(encoding="utf-8", errors="ignore")
+            text = file_path.read_text(encoding="utf-8", errors="ignore")
+            if not text.strip():
+                raise ValueError("The uploaded text document is empty.")
+            return text
         except Exception as e:
-            return f"Error reading text: {e}"
-    return ""
+            raise ValueError(f"Failed to read text file: {e}")
+    raise ValueError(f"Unsupported file format '{ext}'. Only .docx, .txt, and .md files are supported.")
 
 def extract_skills_from_text(text: str) -> List[str]:
     """Identify matched skills in resume text"""
