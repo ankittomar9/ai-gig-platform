@@ -269,7 +269,7 @@ async def get_app_settings():
     return {
         "gemini_api_key_set": bool(raw_key),
         "gemini_api_key_masked": masked_key,
-        "gemini_model": settings.get("gemini_model", "gemini-2.5-flash"),
+        "gemini_model": settings.get("gemini_model", "gemini-3.8-flash"),
         "offline_mode": settings.get("offline_mode", "false").lower() == "true",
         "minimum_rate": float(settings.get("minimum_rate", 0))
     }
