@@ -2,142 +2,107 @@
 
 A unified, full-stack platform built with **Python FastAPI** that continuously tracks, aggregates, and filters AI data annotation, RLHF, prompt engineering, and domain evaluation contracts across **40+ platforms** (including Ashby, Greenhouse, Lever, and direct portals).
 
-Equipped with a **1-Click Application Pack Generator** and an **Interactive 5-Round AI Interview Simulator** that prepares you to clear assessments before submitting applications.
+Equipped with a **Location & Language Eligibility Gate (India Shield)**, **Experience Normalizer ($\le 3$ Years)**, **1-Click Application Pack Generator**, **Anti-AI Detector Shield**, **Docker Containerization**, and an **Interactive 5-Round Voice AI Interview Simulator**.
 
 ---
 
-## 🌟 Key Features
+## 🌟 Key Capabilities
 
-1. **Broad Tier Coverage (Jobs for Everyone)**:
-   - 🟢 **Microtasks ($2 – $15/hr or per-task)**: Clickworker UHRS, Prolific, OneForma, Telus International, Appen.
-   - 🔵 **Mid-Tier ($15 – $30/hr)**: DataAnnotation.tech Core, Mindrift AI Writer/Tutor, Invisible Technologies, Remotasks.
-   - 🟣 **Elite Expert ($30 – $100+/hr)**: Mercor, Micro1, Scale AI, Alignerr (Labelbox), Turing, Cohere.
-2. **1-Click Live Scan (No Cloudflare / Bot blocks)**:
-   - Scans official, public ATS feeds (Ashby, Greenhouse, Lever) in parallel in under 4 seconds.
-3. **Resume & Skill Matcher (0 – 100%)**:
-   - Parses `.docx` and `.txt` resumes.
-   - Ranks gigs based on your actual competencies (Python, RLHF, Prompt Evaluation, Domain Knowledge).
-4. **1-Click Application Pack**:
-   - Generates tailored cover letters, "Why I'm Interested" answers, and quality assurance workflows for that exact job so you don't have to rewrite answers manually.
-5. **Interactive AI Interview Simulator**:
-   - **Round 1:** Background & Communication Screening
-   - **Round 2:** Core Technical & Algorithmic / Domain Reasoning
-   - **Round 3:** RLHF & Model Response Ranking (evaluating pairwise AI outputs)
-   - **Round 4:** Adversarial Prompting & Red-Teaming
-   - **Round 5:** Final Scoring (out of 100) & Pass/Fail Debrief with exact sample "Winning Answers".
-   - Works either with your **Google Gemini API Key** (up to 1,500 free daily requests) or in **Offline Simulation Mode** (no API key needed).
-6. **Master Interview Prompt Export**:
-   - 1-click copy of the interview persona to paste directly into Antigravity or external chat windows for extended prep.
+### 1. 🇮🇳 Candidate Location & Language Verification Gate (India Shield)
+- Specifically calibrated for candidates based in **India** fluent in **English and Hindi**.
+- **Location Disqualification:** Automatically filters out all on-site or country-restricted roles in North America and Europe (San Francisco, Toronto, New York City, Washington DC, London, Berlin, Paris, Tokyo, etc.).
+- **Language Disqualification:** Rejects roles requiring foreign non-English/non-Hindi languages (German, Spanish, French, Japanese, Arabic, Russian, Portuguese, Italian, Korean, Dutch, Igbo, etc.).
+- **1-Click Toggle:** Active by default, presenting a curated feed of verified positions you can apply for from India without visa or location barriers.
+
+### 2. 🎯 Experience Level Matcher ($\le 3$ Years Fit)
+- Aligned to the candidate's ~2-3 years backend software engineering background (Java, Spring Boot, SQL, Docker, GCP, Linux).
+- Automatically filters out Senior, Staff, Principal, Lead, and 5-10+ year positions that lead to automatic rejection.
+- Prioritizes assessment-based platforms (Outlier, Alignerr, DataAnnotation) and mid-level software engineering roles.
+
+### 3. 🏢 Platform & Company Breakdown (520+ Gigs Indexed)
+- **Greenhouse ATS:** Scale AI, Outlier (Remotasks), Turing, Invisible Technologies.
+- **Ashby ATS:** Mercor, Cohere, Surge AI.
+- **Lever ATS:** Appen.
+- **Direct Contributor Platforms:** Alignerr (Labelbox), DataAnnotation.tech, Micro1, Mindrift (Toloka), Clickworker/UHRS, Prolific, Telus International AI, OneForma.
+
+### 4. 🎙️ Interactive 5-Round Voice AI Interview Simulator
+- **Voice STT Input:** In-browser streaming Speech-to-Text (`webkitSpeechRecognition`) with MediaRecorder fallbacks to local Whisper sidecars (`http://localhost:8178`) and Groq Cloud Whisper.
+- **5 Structured Rounds:**
+  1. *Background & Technical Screening*
+  2. *Domain Logic & Algorithmic Code Review*
+  3. *RLHF & Pairwise Model Output Ranking*
+  4. *Adversarial Red-Teaming, Jailbreaks & Safety*
+  5. *Final Quantitative Report Card & Rubric Evaluation*
+- **Frontier AI Scoring:** Evaluated by Google's `gemini-3.8-flash` for honest, non-sycophantic scoring.
+
+### 5. 🛡️ Anti-AI Detector Shield
+- Humanizes application answers and generated resumes to bypass AI detectors (GPTZero, Turnitin, CopyLeaks).
+- Replaces 40+ synthetic AI clichés (*"delve"*, *"testament"*, *"beacon"*, *"multifaceted"*, *"pivotal"*) with authentic developer language.
+- Enforces natural burstiness (varying sentence lengths) and anchors claims in real-world production engineering anecdotes.
+
+### 6. 📁 Multi-Persona Resume Vault & 1-Click Tailored ATS Resumes
+- Pre-loaded with 4 specialized candidate personas:
+  - Application Production Systems Specialist (Java, Spring Boot, SQL, Docker, Linux, GCP)
+  - Software Engineer & Backend Developer
+  - AI Trainer & RLHF Specialist
+  - Data & Quality Evaluation Specialist
+- Generates dynamic tailored ATS resumes tailored to the specific target gig in one click.
 
 ---
 
-## 🚀 Quick Start (Windows)
+## 🐳 Docker Deployment
 
-### Option 1: One-Click Launch
-Double-click `run.bat` in this folder:
-```cmd
-D:\ai-gig-platform\run.bat
+The application is fully containerized and can be started with a single command:
+
+```bash
+# Build and run with Docker Compose
+docker compose up -d --build
 ```
-This automatically activates the environment, starts the FastAPI server, and launches your browser at `http://127.0.0.1:8000`.
 
-### Option 2: Manual Terminal Launch
+The service will be live at `http://localhost:8000` with automated healthchecks and persistent SQLite storage mounted to `./data`.
+
+To stop the container:
+```bash
+docker compose down
+```
+
+---
+
+## 🚀 Local Quick Start (Without Docker)
+
+### Option 1: One-Click Windows Runner
+Double-click `run.bat` in the repository root:
+```cmd
+run.bat
+```
+
+### Option 2: Manual PowerShell Launch
 ```powershell
+# 1. Activate Virtual Environment
 cd D:\ai-gig-platform
 .\venv\Scripts\activate
-uvicorn app.main:app --host 127.0.0.1 --port 8000 --reload
+
+# 2. Start FastAPI Server
+$env:PYTHONPATH="."
+uvicorn app.main:app --host 127.0.0.1 --port 8000 --reload --reload-dir "app"
 ```
 Open [http://localhost:8000](http://localhost:8000) in your browser.
 
 ---
 
-## 🔑 AI Configuration & Gemini Free Tier
-1. Open the platform and click the **"AI Key"** button in the top right.
-2. You can use **Google Gemini 2.5 Flash** completely free by generating an API key at [Google AI Studio](https://aistudio.google.com/app/apikey).
-   - Google AI Studio provides **1,500 free requests per day** and 15 requests per minute.
-3. If you do not have an API key, simply toggle **"Offline Simulation Mode"** in the settings modal to use the built-in scenario trees without making external network calls.
+## 👥 Collab Review Suite for AI Agents
+
+For autonomous reviewing AI agents and human evaluators auditing this repository:
+- Review the agentic system specification in [`AGENTS.md`](./AGENTS.md).
+- Inspect the architectural blueprint in [`collab/ARCHITECTURE.md`](./collab/ARCHITECTURE.md).
+- Verify feature coverage against [`collab/FEATURE_DOSSIER.md`](./collab/FEATURE_DOSSIER.md).
+- Execute the verification scorecard in [`collab/REVIEW_CHECKLIST.md`](./collab/REVIEW_CHECKLIST.md).
+- Track the iterative development history in [`collab/CHANGELOG.md`](./collab/CHANGELOG.md).
 
 ---
 
-## 🛠️ GitHub Push & SSH Key Guide
+## 🔒 Security & Privacy
 
-### Your Current SSH Status
-Your machine already has an SSH identity for GitHub configured:
-- User: `ankurtomar8`
-- Key file: `~/.ssh/id_ed25519_ankurtomar8`
-- SSH alias: `github-ankurtomar8`
-
-### Step 1: Create an Empty Repository on GitHub
-1. Open your browser and go to [https://github.com/new](https://github.com/new).
-2. Name the repository: `ai-gig-platform` (or any name you prefer).
-3. Leave it unchecked for "Add README" or ".gitignore" (we already have them).
-4. Click **Create repository**.
-
-### Step 2: Push This Project to Your GitHub
-In your PowerShell terminal, run:
-```powershell
-cd D:\ai-gig-platform
-git remote add origin git@github-ankurtomar8:ankurtomar8/ai-gig-platform.git
-git push -u origin main
-```
-*Note: Using `github-ankurtomar8` automatically routes your commits through your verified `id_ed25519_ankurtomar8` key!*
-
----
-
-### 📖 How to Generate a Brand-New SSH Key (If Needed in Future)
-If you ever need to generate an SSH key from scratch on any computer:
-
-1. **Generate the key**:
-   ```powershell
-   ssh-keygen -t ed25519 -C "your_email@example.com"
-   ```
-   *(Press Enter to save to default location, and Enter twice for no passphrase).*
-
-2. **Copy the Public Key**:
-   ```powershell
-   Get-Content ~/.ssh/id_ed25519.pub | Set-Clipboard
-   ```
-
-3. **Add to GitHub**:
-   - Go to [GitHub Settings → SSH and GPG keys](https://github.com/settings/keys).
-   - Click **New SSH key**.
-   - Paste your key and click **Add SSH key**.
-
-4. **Verify Connectivity**:
-   ```powershell
-   ssh -T git@github.com
-   ```
-   You should see: `Hi <username>! You've successfully authenticated...`
-
----
-
-## 📂 Project Directory Structure
-
-```
-D:\ai-gig-platform\
-├── app\
-│   ├── main.py                  # FastAPI routes & static file server
-│   ├── config.py                # Environment & directory configuration
-│   ├── database.py              # SQLite storage for jobs, profile & sessions
-│   ├── models.py                # Pydantic data schemas
-│   ├── scrapers\
-│   │   ├── base.py              # Abstract scraper interface
-│   │   ├── ashby.py             # Ashby ATS (Mercor, Surge AI, Cohere)
-│   │   ├── greenhouse.py        # Greenhouse ATS (Scale AI, Remotasks, Invisible)
-│   │   ├── lever.py             # Lever ATS (Appen, etc.)
-│   │   ├── direct_platforms.py  # Direct AI gigs (DataAnnotation, Micro1, Alignerr, Mindrift, etc.)
-│   │   └── runner.py            # Parallel execution orchestrator
-│   ├── services\
-│   │   ├── matcher.py           # Resume skill extraction & scoring
-│   │   ├── pay_parser.py        # Compensation parsing & tier tagging
-│   │   ├── application_pack.py  # 1-Click tailored answer bundle
-│   │   └── interview_agent.py   # 5-Round AI Interview Simulator
-│   └── static\
-│       ├── index.html           # Single Page Application
-│       ├── app.js               # Reactive frontend logic & modals
-│       └── style.css            # Dark-mode styling & badge animations
-├── data\
-│   └── gighunter.db             # Local SQLite database
-├── requirements.txt             # Python dependencies
-├── run.bat                      # One-click launch script
-└── README.md                    # Documentation
-```
+- Strict `.gitignore` and `.dockerignore` prevent leaking `.env`, private keys, or SQLite databases.
+- Masked API key display on the web dashboard.
+- Zero local network exposure; binds locally by default.

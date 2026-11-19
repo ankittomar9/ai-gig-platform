@@ -71,23 +71,43 @@ async def list_jobs(
     interview_type: Optional[str] = Query(None),
     search: Optional[str] = Query(None),
     company: Optional[str] = Query(None),
-    max_exp: Optional[int] = Query(None)
+    max_exp: Optional[int] = Query(None),
+    india_only: Optional[bool] = Query(None)
 ):
-    """Retrieve jobs with optional filtering by tier, category, interview, company, search, and max experience"""
+    """Retrieve jobs with optional filtering by tier, category, interview, company, search, max experience, and India eligibility"""
     jobs = get_all_jobs(
         tier=tier,
         category=category,
         interview_type=interview_type,
         search=search,
         company=company,
-        max_exp=max_exp
+        max_exp=max_exp,
+        india_only=india_only
     )
     return {"count": len(jobs), "jobs": jobs}
 
 @app.get("/api/companies")
-async def list_companies():
+async def list_companies(india_only: bool = Query(False)):
     """Retrieve list of companies with live job counts and eligible (<3 yrs) breakdown"""
-    return {"companies": get_all_companies()}
+    return {"companies": get_all_companies(india_only=india_only)}
+
+@app.get("/api/metrics")
+async def get_dashboard_metrics():
+    """Retrieve comprehensive platform metrics for Candidate Dashboard"""
+    all_j = get_all_jobs()
+    total = len(all_j)
+    india_eligible = sum(1 for j in all_j if j.get("is_india_eligible"))
+    fits_resume = sum(1 for j in all_j if j.get("min_exp_years", 0) <= 3)
+    perfect_match = sum(1 for j in all_j if j.get("is_india_eligible") and j.get("min_exp_years", 0) <= 3)
+    high_score = sum(1 for j in all_j if j.get("match_score", 0) >= 70)
+
+    return {
+        "total_jobs": total,
+        "india_eligible": india_eligible,
+        "fits_resume": fits_resume,
+        "perfect_match": perfect_match,
+        "high_score": high_score
+    }
 
 @app.get("/api/jobs/{job_id}")
 async def get_job(job_id: str):

@@ -5,7 +5,7 @@ from app.scrapers.greenhouse import GreenhouseScraper
 from app.scrapers.lever import LeverScraper
 from app.scrapers.direct_platforms import DirectPlatformScraper
 from app.services.matcher import calculate_match_score
-from app.services.pay_parser import extract_experience_years
+from app.services.pay_parser import extract_experience_years, check_location_and_language
 from app.database import get_user_profile, save_or_update_jobs
 
 async def run_full_scan() -> Dict[str, Any]:
@@ -54,6 +54,15 @@ async def run_full_scan() -> Dict[str, Any]:
         job["min_exp_years"] = exp_data["min_exp"]
         job["max_exp_years"] = exp_data["max_exp"]
         job["exp_label"] = exp_data["label"]
+
+        loc_data = check_location_and_language(
+            job.get("title", ""),
+            job.get("location", ""),
+            job.get("description", "")
+        )
+        job["is_india_eligible"] = 1 if loc_data["is_india_eligible"] else 0
+        job["location_status"] = loc_data["location_status"]
+        job["language_status"] = loc_data["language_status"]
 
     # Save to database
     save_or_update_jobs(all_jobs)

@@ -1,0 +1,23 @@
+version: '3.8'
+
+services:
+  ai-gig-hunter:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: ai-gig-hunter:latest
+    container_name: ai_gig_platform
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./data:/app/data
+    env_file:
+      - .env
+    environment:
+      - PYTHONUNBUFFERED=1
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/metrics"]
+      interval: 30s
+      timeout: 5s
+      retries: 3

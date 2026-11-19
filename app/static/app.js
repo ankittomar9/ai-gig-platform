@@ -1,5 +1,6 @@
 // State variables
 let allJobs = [];
+let activeIndiaOnly = true; // Default: Only show gigs applicable from India in English & Hindi!
 let activeTier = 'all';
 let activeCategory = 'all';
 let activeCompany = 'all';
@@ -26,6 +27,7 @@ document.addEventListener('DOMContentLoaded', () => {
 async function loadJobs() {
     try {
         const queryParams = new URLSearchParams();
+        if (activeIndiaOnly) queryParams.append('india_only', 'true');
         if (activeTier !== 'all') queryParams.append('tier', activeTier);
         if (activeCategory !== 'all') queryParams.append('category', activeCategory);
         if (activeCompany !== 'all') queryParams.append('company', activeCompany);
@@ -38,11 +40,11 @@ async function loadJobs() {
         const data = await res.json();
         allJobs = data.jobs || [];
 
-        // Refresh counter for gigs fitting resume
-        updateEligibleCounter();
+        // Refresh live dashboard metrics
+        updateDashboardMetrics();
 
         // If zero jobs in DB, auto-trigger first scan
-        if (allJobs.length === 0 && !searchVal && activeTier === 'all' && activeCategory === 'all' && activeCompany === 'all' && activeExp === 'all') {
+        if (allJobs.length === 0 && !searchVal && activeTier === 'all' && activeCategory === 'all' && activeCompany === 'all' && activeExp === 'all' && !activeIndiaOnly) {
             await triggerScan();
             return;
         }
@@ -120,11 +122,25 @@ function renderJobs(jobs) {
                     </button>
                 </div>
 
-                <!-- Badges: Compensation & Requirements -->
+                <!-- Badges: Compensation, Location, Language & Requirements -->
                 <div class="flex flex-wrap items-center gap-1.5 text-xs">
                     <span class="px-2.5 py-0.5 rounded-full font-semibold border ${tierColor}">
                         ${escapeHtml(job.compensation)}
                     </span>
+
+                    <!-- India Location Status Badge -->
+                    ${job.is_india_eligible ? `
+                    <span class="px-2.5 py-0.5 rounded-full font-semibold border bg-emerald-950/70 text-emerald-300 border-emerald-800/80 flex items-center space-x-1" title="Applicable from India: ${escapeHtml(job.location_status || 'India Remote')}">
+                        <i data-lucide="globe" class="w-3 h-3 text-emerald-400"></i>
+                        <span>🇮🇳 ${escapeHtml(job.location_status || 'India / Remote')}</span>
+                    </span>
+                    ` : `
+                    <span class="px-2.5 py-0.5 rounded-full font-medium border bg-rose-950/50 text-rose-300 border-rose-800/60 flex items-center space-x-1" title="Ineligible from India: ${escapeHtml(job.location_status || job.location)}">
+                        <i data-lucide="map-pin-off" class="w-3 h-3 text-rose-400"></i>
+                        <span>🚫 ${escapeHtml(job.location || 'Foreign Location')}</span>
+                    </span>
+                    `}
+
                     <span class="px-2.5 py-0.5 rounded-full font-medium border flex items-center space-x-1 ${interviewColor}">
                         <i data-lucide="${interviewIcon}" class="w-3 h-3"></i>
                         <span>${escapeHtml(job.requires_interview)}</span>
@@ -132,10 +148,11 @@ function renderJobs(jobs) {
                     <span class="px-2.5 py-0.5 rounded-full font-medium border bg-slate-800/80 text-slate-300 border-slate-700">
                         ${escapeHtml(job.category)}
                     </span>
+
                     <!-- Experience requirement badge -->
                     ${job.min_exp_years <= 3 ? `
-                    <span class="px-2.5 py-0.5 rounded-full font-medium border bg-emerald-950/70 text-emerald-300 border-emerald-800/80 flex items-center space-x-1" title="Fits your 2-3 years resume profile">
-                        <i data-lucide="check-circle-2" class="w-3 h-3 text-emerald-400"></i>
+                    <span class="px-2.5 py-0.5 rounded-full font-medium border bg-indigo-950/70 text-indigo-300 border-indigo-800/80 flex items-center space-x-1" title="Fits your 2-3 years resume profile">
+                        <i data-lucide="check-circle-2" class="w-3 h-3 text-indigo-400"></i>
                         <span>${escapeHtml(job.exp_label || '0-3 yrs')}</span>
                     </span>
                     ` : `
@@ -265,6 +282,24 @@ function setCompanyFilter(company) {
     loadJobs();
 }
 
+// Candidate Location Filter (India Eligible Toggle)
+function toggleIndiaFilter(isIndiaOnly) {
+    activeIndiaOnly = isIndiaOnly;
+    const btnIndia = document.getElementById('btn-india-only');
+    const btnAll = document.getElementById('btn-all-locations');
+    if (btnIndia && btnAll) {
+        if (isIndiaOnly) {
+            btnIndia.classList.add('active');
+            btnAll.classList.remove('active');
+        } else {
+            btnIndia.classList.remove('active');
+            btnAll.classList.add('active');
+        }
+    }
+    loadCompanies();
+    loadJobs();
+}
+
 // Experience Level Filter
 function setExpFilter(exp) {
     activeExp = exp;
@@ -284,7 +319,7 @@ function setExpFilter(exp) {
 // Load company list for dropdown
 async function loadCompanies() {
     try {
-        const res = await fetch('/api/companies');
+        const res = await fetch(`/api/companies?india_only=${activeIndiaOnly ? 'true' : 'false'}`);
         const data = await res.json();
         allCompanies = data.companies || [];
 
@@ -292,12 +327,13 @@ async function loadCompanies() {
         if (!selectEl) return;
 
         const totalGigs = allCompanies.reduce((acc, c) => acc + c.total_count, 0);
-        selectEl.innerHTML = `<option value="all">All Companies (${totalGigs} Total Across All Portals)</option>`;
+        const prefix = activeIndiaOnly ? 'India Eligible' : 'All Open';
+        selectEl.innerHTML = `<option value="all">All Companies (${totalGigs} ${prefix} Gigs)</option>`;
 
         allCompanies.forEach(c => {
             const opt = document.createElement('option');
             opt.value = c.company;
-            opt.textContent = `${c.company} (${c.total_count} total • ${c.eligible_count} fit ≤3y)`;
+            opt.textContent = `${c.company} (${c.total_count} open • ${c.eligible_count} fit ≤3y)`;
             if (activeCompany === c.company) opt.selected = true;
             selectEl.appendChild(opt);
         });
@@ -306,15 +342,25 @@ async function loadCompanies() {
     }
 }
 
-// Update live counter for gigs fitting resume
-async function updateEligibleCounter() {
+// Update live dashboard metrics across all dimensions
+async function updateDashboardMetrics() {
     try {
-        const res = await fetch('/api/jobs?max_exp=3');
-        const data = await res.json();
-        const el = document.getElementById('count-eligible');
-        if (el) el.textContent = data.count || 0;
+        const res = await fetch('/api/metrics');
+        const m = await res.json();
+
+        const totalEl = document.getElementById('count-total');
+        if (totalEl) totalEl.textContent = m.total_jobs;
+
+        const indiaCountEl = document.getElementById('count-india');
+        if (indiaCountEl) indiaCountEl.textContent = m.india_eligible;
+
+        const badgeIndiaEl = document.getElementById('badge-india-count');
+        if (badgeIndiaEl) badgeIndiaEl.textContent = m.india_eligible;
+
+        const eligibleEl = document.getElementById('count-eligible');
+        if (eligibleEl) eligibleEl.textContent = m.perfect_match;
     } catch (e) {
-        console.error(e);
+        console.error("Metrics load failed", e);
     }
 }
 

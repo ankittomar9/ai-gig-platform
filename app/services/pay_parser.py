@@ -195,3 +195,100 @@ def extract_experience_years(title: str, description: str = "", company: str = "
     # 5. Default mid-level IC (Software Engineer, Analyst, Operations)
     return {"min_exp": 2, "max_exp": 3, "label": "1-3 yrs (Mid-Level)", "is_fits_resume": True}
 
+NON_INDIA_LOCATION_PATTERNS = [
+    r'\bsan francisco\b', r'\bsf\b', r'\bnew york\b', r'\bnyc\b', r'\btoronto\b',
+    r'\bseattle\b', r'\blondon\b', r'\bunited states\b', r'\bus only\b', r'\busa\b',
+    r'\bcanada\b', r'\bparis\b', r'\bfrance\b', r'\bberlin\b', r'\bgermany\b',
+    r'\btokyo\b', r'\bjapan\b', r'\bkorea\b', r'\bsingapore\b', r'\bdubai\b',
+    r'\bsaudi arabia\b', r'\briyadh\b', r'\bstockholm\b', r'\bsweden\b', r'\bottawa\b',
+    r'\bhouston\b', r'\bhalifax\b', r'\bmiddle east\b', r'\beurope\b', r'\bmexico\b',
+    r'\bchile\b', r'\bargentina\b', r'\bcolombia\b', r'\bperu\b', r'\bcosta rica\b',
+    r'\bqatar\b', r'\bdoha\b', r'\bunited arab emirates\b', r'\buae\b', r'\bnigeria\b',
+    r'\baustralia\b', r'\buk\b', r'\bnetherlands\b', r'\bamsterdam\b', r'\bboston\b',
+    r'\baustin\b', r'\bchicago\b', r'\blos angeles\b', r'\bsan diego\b', r'\bwashington\b',
+    r'\bdc\b', r'\bcolorado springs\b', r'\bdayton\b', r'\btampa\b', r'\bhuntsville\b',
+    r'\bdetroit\b', r'\bkuwait\b', r'\bpalo alto\b', r'\bplano\b', r'\btexas\b',
+    r'\bcalifornia\b', r'\bcolorado\b', r'\bhawaii\b', r'\bhonolulu\b', r'\bomaha\b',
+    r'\bmiami\b', r'\bflorida\b', r'\bmanila\b', r'\bphilippines\b', r'\bbrazil\b',
+    r'\bsão paulo\b', r'\bmercor hq\b', r'\b181 fremont\b', r'\bst\. louis\b',
+    r'^(us|jp|qa|pe|my|mx|mm|cr|co|cl|cf|cd|bh|ar|ae)$'
+]
+
+FOREIGN_LANGUAGES = [
+    'spanish', 'german', 'french', 'japanese', 'chinese', 'mandarin', 'cantonese',
+    'arabic', 'portuguese', 'italian', 'russian', 'korean', 'dutch', 'vietnamese',
+    'turkish', 'polish', 'ukrainian', 'swedish', 'danish', 'norwegian', 'finnish',
+    'hebrew', 'thai', 'indonesian', 'malay', 'igbo', 'yoruba', 'tagalog', 'swahili',
+    'persian', 'farsi', 'czech', 'greek', 'hungarian', 'romanian'
+]
+
+def check_location_and_language(title: str, location: str, description: str = "") -> Dict[str, Any]:
+    """
+    Evaluates whether a candidate residing in India who speaks English and Hindi
+    is eligible to apply for this job.
+    Returns:
+    {
+        "is_india_eligible": bool,
+        "location_status": str,
+        "language_status": str
+    }
+    """
+    t_low = title.lower()
+    l_low = (location or "").lower().strip()
+    d_low = (description or "").lower()
+
+    # 1. Foreign Language Check (Reject if role title explicitly targets a foreign non-English/non-Hindi language)
+    for fl in FOREIGN_LANGUAGES:
+        if re.search(r'\b' + fl + r'\b', t_low):
+            return {
+                "is_india_eligible": False,
+                "location_status": location or "Unknown",
+                "language_status": f"Foreign: {fl.title()} Required"
+            }
+
+    # 2. Location Check
+    # A. Explicit India locations (Bangalore, Chennai, Hyderabad, Remote India, etc.)
+    if any(k in l_low for k in ['india', 'bengaluru', 'bangalore', 'hyderabad', 'mumbai', 'delhi', 'noida', 'gurgaon', 'pune', 'chennai', 'karnataka', 'telangana']):
+        return {
+            "is_india_eligible": True,
+            "location_status": "India (Local/Remote)",
+            "language_status": "English / Hindi Eligible"
+        }
+
+    # B. Global Remote keywords (Worldwide, Global Remote, Anywhere)
+    if any(k in l_low for k in ['worldwide', 'global', 'anywhere', 'remote (worldwide)', 'remote (global)', 'global / remote', 'global - remote', 'remote - non-us']):
+        return {
+            "is_india_eligible": True,
+            "location_status": "Global Remote",
+            "language_status": "English / Hindi Eligible"
+        }
+
+    # C. Open Remote check (Check description for US-only / Canada-only restrictions)
+    if l_low in ['remote', 'remote / flexible', '']:
+        if any(r in d_low for r in ['us only', 'must reside in the united states', 'us work authorization', 'u.s. citizens', 'canada only', 'must be based in the us', 'authorized to work in the us']):
+            return {
+                "is_india_eligible": False,
+                "location_status": "US-Restricted Remote",
+                "language_status": "English / Hindi Eligible"
+            }
+        return {
+            "is_india_eligible": True,
+            "location_status": "Open Remote",
+            "language_status": "English / Hindi Eligible"
+        }
+
+    # D. Disqualify known non-India locations (San Francisco, Toronto, NYC, London, etc.)
+    for pat in NON_INDIA_LOCATION_PATTERNS:
+        if re.search(pat, l_low):
+            return {
+                "is_india_eligible": False,
+                "location_status": f"Ineligible Location: {location}",
+                "language_status": "English / Hindi Eligible"
+            }
+
+    return {
+        "is_india_eligible": False,
+        "location_status": f"Ineligible Location: {location}",
+        "language_status": "English / Hindi Eligible"
+    }
+

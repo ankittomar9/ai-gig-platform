@@ -3,7 +3,7 @@ import json
 from typing import List, Dict, Any, Optional
 from datetime import datetime
 from app.config import DB_PATH
-from app.services.pay_parser import extract_experience_years
+from app.services.pay_parser import extract_experience_years, check_location_and_language
 
 def get_connection():
     conn = sqlite3.connect(DB_PATH)
@@ -41,13 +41,19 @@ def init_db():
     )
     """)
 
-    # Migration: ensure min_exp_years and exp_label columns exist if table was already created
+    # Migration: ensure min_exp_years, exp_label, is_india_eligible, location_status, language_status columns exist
     cursor.execute("PRAGMA table_info(jobs)")
     cols = [r[1] for r in cursor.fetchall()]
     if "min_exp_years" not in cols:
         cursor.execute("ALTER TABLE jobs ADD COLUMN min_exp_years INTEGER DEFAULT 0")
     if "exp_label" not in cols:
         cursor.execute("ALTER TABLE jobs ADD COLUMN exp_label TEXT DEFAULT '0-2 yrs'")
+    if "is_india_eligible" not in cols:
+        cursor.execute("ALTER TABLE jobs ADD COLUMN is_india_eligible INTEGER DEFAULT 0")
+    if "location_status" not in cols:
+        cursor.execute("ALTER TABLE jobs ADD COLUMN location_status TEXT DEFAULT 'Open Remote'")
+    if "language_status" not in cols:
+        cursor.execute("ALTER TABLE jobs ADD COLUMN language_status TEXT DEFAULT 'English / Hindi'")
 
     # User profile table
     cursor.execute("""
@@ -182,20 +188,30 @@ def save_or_update_jobs(jobs: List[Dict[str, Any]]):
             min_exp = exp_info["min_exp"]
             exp_label = exp_info["label"]
 
+        is_in = j.get("is_india_eligible")
+        loc_stat = j.get("location_status")
+        lang_stat = j.get("language_status")
+        if is_in is None or loc_stat is None or lang_stat is None:
+            loc_info = check_location_and_language(j.get("title", ""), j.get("location", ""), j.get("description", ""))
+            is_in = 1 if loc_info["is_india_eligible"] else 0
+            loc_stat = loc_info["location_status"]
+            lang_stat = loc_info["language_status"]
+
         cursor.execute("""
         INSERT OR REPLACE INTO jobs (
             id, platform, title, company, url, compensation, comp_min, comp_max,
             comp_unit, tier, category, location, requires_interview, description,
             match_score, matching_skills, scraped_at, is_saved, application_status,
-            min_exp_years, exp_label
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            min_exp_years, exp_label, is_india_eligible, location_status, language_status
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """, (
             j["id"], j["platform"], j["title"], j["company"], j["url"],
             j.get("compensation", "Unspecified"), j.get("comp_min", 0.0), j.get("comp_max", 0.0),
             j.get("comp_unit", "hr"), j.get("tier", "Mid-Tier ($15-$30)"), j.get("category", "Generalist"),
             j.get("location", "Remote"), j.get("requires_interview", "AI Interview"),
             j.get("description", ""), j.get("match_score", 0), skills_json,
-            now, is_saved, app_status, int(min_exp), str(exp_label)
+            now, is_saved, app_status, int(min_exp), str(exp_label),
+            int(is_in), str(loc_stat), str(lang_stat)
         ))
 
     conn.commit()
@@ -207,13 +223,17 @@ def get_all_jobs(
     interview_type: Optional[str] = None,
     search: Optional[str] = None,
     company: Optional[str] = None,
-    max_exp: Optional[int] = None
+    max_exp: Optional[int] = None,
+    india_only: Optional[bool] = None
 ) -> List[Dict[str, Any]]:
     conn = get_connection()
     cursor = conn.cursor()
     
     query = "SELECT * FROM jobs WHERE 1=1"
     params = []
+
+    if india_only:
+        query += " AND is_india_eligible = 1"
 
     if tier and tier != "all":
         query += " AND tier = ?"
@@ -251,20 +271,24 @@ def get_all_jobs(
         d["matching_skills"] = json.loads(d["matching_skills"]) if d["matching_skills"] else []
         d["is_saved"] = bool(d["is_saved"])
         d["is_fits_resume"] = bool(d.get("min_exp_years", 0) <= 3)
+        d["is_india_eligible"] = bool(d.get("is_india_eligible", 0))
         result.append(d)
 
     conn.close()
     return result
 
-def get_all_companies() -> List[Dict[str, Any]]:
+def get_all_companies(india_only: bool = False) -> List[Dict[str, Any]]:
     conn = get_connection()
     cursor = conn.cursor()
-    cursor.execute("""
+    where_clause = " WHERE is_india_eligible = 1" if india_only else ""
+    cursor.execute(f"""
     SELECT 
         company, 
         COUNT(*) as total_count,
-        SUM(CASE WHEN min_exp_years <= 3 THEN 1 ELSE 0 END) as eligible_count
+        SUM(CASE WHEN min_exp_years <= 3 THEN 1 ELSE 0 END) as eligible_count,
+        SUM(CASE WHEN is_india_eligible = 1 THEN 1 ELSE 0 END) as india_count
     FROM jobs 
+    {where_clause}
     GROUP BY company 
     ORDER BY total_count DESC
     """)
@@ -274,7 +298,8 @@ def get_all_companies() -> List[Dict[str, Any]]:
         {
             "company": r["company"],
             "total_count": r["total_count"],
-            "eligible_count": r["eligible_count"] if r["eligible_count"] is not None else 0
+            "eligible_count": r["eligible_count"] if r["eligible_count"] is not None else 0,
+            "india_count": r["india_count"] if r["india_count"] is not None else 0
         }
         for r in rows
     ]
