@@ -284,10 +284,14 @@ async def get_app_settings():
     # Mask API key for security
     raw_key = settings.get("gemini_api_key", "")
     masked_key = f"{raw_key[:4]}...{raw_key[-4:]}" if len(raw_key) > 8 else ("Set" if raw_key else "Not set")
+    raw_groq = settings.get("groq_api_key", "") or os.getenv("GROQ_API_KEY", "")
+    masked_groq = f"{raw_groq[:4]}...{raw_groq[-4:]}" if len(raw_groq) > 8 else ("Set" if raw_groq else "Not set")
     return {
         "gemini_api_key_set": bool(raw_key),
         "gemini_api_key_masked": masked_key,
         "gemini_model": settings.get("gemini_model", "gemini-3.8-flash"),
+        "groq_api_key_set": bool(raw_groq),
+        "groq_api_key_masked": masked_groq,
         "offline_mode": settings.get("offline_mode", "false").lower() == "true",
         "minimum_rate": float(settings.get("minimum_rate", 0))
     }
@@ -299,6 +303,8 @@ async def update_app_settings(payload: SettingsUpdate):
         set_setting("gemini_api_key", payload.gemini_api_key.strip())
     if payload.gemini_model is not None:
         set_setting("gemini_model", payload.gemini_model)
+    if payload.groq_api_key is not None:
+        set_setting("groq_api_key", payload.groq_api_key.strip())
     if payload.offline_mode is not None:
         set_setting("offline_mode", str(payload.offline_mode).lower())
     if payload.minimum_rate is not None:

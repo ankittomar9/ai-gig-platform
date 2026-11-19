@@ -38,11 +38,12 @@ class ApplicationPack(BaseModel):
     company: str
     role_title: str
     apply_url: str
-    cover_letter: str
     why_interested: str
     relevant_experience: str
     quality_assurance_strategy: str
     master_interview_prompt: str
+    one_click_bundle: Optional[str] = None
+    is_humanized: bool = True
 
 class InterviewMessage(BaseModel):
     sender: str # 'ai' or 'user'
@@ -73,6 +74,7 @@ class InterviewChatRequest(BaseModel):
 class SettingsUpdate(BaseModel):
     gemini_api_key: Optional[str] = None
     gemini_model: Optional[str] = None
+    groq_api_key: Optional[str] = None
     offline_mode: Optional[bool] = None
     minimum_rate: Optional[float] = None
 

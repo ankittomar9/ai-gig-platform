@@ -792,7 +792,11 @@ async function loadSettings() {
         if (settings.gemini_api_key_set) {
             document.getElementById('setting-gemini-key').placeholder = settings.gemini_api_key_masked;
         }
-        document.getElementById('setting-model').value = settings.gemini_model || 'gemini-2.5-flash';
+        if (settings.groq_api_key_set) {
+            const groqEl = document.getElementById('setting-groq-key');
+            if (groqEl) groqEl.placeholder = settings.groq_api_key_masked;
+        }
+        document.getElementById('setting-model').value = settings.gemini_model || 'gemini-3.8-flash';
         document.getElementById('setting-offline').checked = settings.offline_mode;
     } catch (e) {
         console.error("Failed to load settings", e);
@@ -801,18 +805,23 @@ async function loadSettings() {
 
 async function saveAppSettings() {
     const key = document.getElementById('setting-gemini-key').value.trim();
+    const groqKeyInput = document.getElementById('setting-groq-key');
+    const groqKey = groqKeyInput ? groqKeyInput.value.trim() : '';
     const model = document.getElementById('setting-model').value;
     const offline = document.getElementById('setting-offline').checked;
 
     try {
+        const payload = {
+            gemini_model: model,
+            offline_mode: offline
+        };
+        if (key) payload.gemini_api_key = key;
+        if (groqKey) payload.groq_api_key = groqKey;
+
         await fetch('/api/settings', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                gemini_api_key: key || undefined,
-                gemini_model: model,
-                offline_mode: offline
-            })
+            body: JSON.stringify(payload)
         });
         closeModal('modal-settings');
         showToast('AI Settings updated successfully!');
