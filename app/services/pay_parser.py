@@ -222,6 +222,18 @@ FOREIGN_LANGUAGES = [
     'persian', 'farsi', 'czech', 'greek', 'hungarian', 'romanian'
 ]
 
+INDIA_LOCATIONS = [
+    'india', 'bengaluru', 'bangalore', 'hyderabad', 'mumbai', 'delhi', 'noida',
+    'gurgaon', 'gurugram', 'pune', 'chennai', 'karnataka', 'telangana', 'kolkata',
+    'calcutta', 'ahmedabad', 'gujarat', 'jaipur', 'rajasthan', 'indore', 'bhopal',
+    'madhya pradesh', 'chandigarh', 'mohali', 'punjab', 'haryana', 'kochi', 'cochin',
+    'trivandrum', 'thiruvananthapuram', 'kerala', 'coimbatore', 'tamil nadu',
+    'lucknow', 'kanpur', 'uttar pradesh', 'bhubaneswar', 'odisha', 'orissa',
+    'nagpur', 'maharashtra', 'visakhapatnam', 'vizag', 'andhra pradesh', 'patna',
+    'bihar', 'surat', 'vadodara', 'west bengal', 'in-remote', 'remote india',
+    'india remote', 'remote - india', 'remote (india)', 'remote — india'
+]
+
 def check_location_and_language(title: str, location: str, description: str = "") -> Dict[str, Any]:
     """
     Evaluates whether a candidate residing in India who speaks English and Hindi
@@ -247,8 +259,8 @@ def check_location_and_language(title: str, location: str, description: str = ""
             }
 
     # 2. Location Check
-    # A. Explicit India locations (Bangalore, Chennai, Hyderabad, Remote India, etc.)
-    if any(k in l_low for k in ['india', 'bengaluru', 'bangalore', 'hyderabad', 'mumbai', 'delhi', 'noida', 'gurgaon', 'pune', 'chennai', 'karnataka', 'telangana']):
+    # A. Explicit India locations (Bangalore, Chennai, Hyderabad, Ahmedabad, Kolkata, Remote India, etc.)
+    if any(k in l_low for k in INDIA_LOCATIONS):
         return {
             "is_india_eligible": True,
             "location_status": "India (Local/Remote)",
@@ -286,9 +298,10 @@ def check_location_and_language(title: str, location: str, description: str = ""
                 "language_status": "English / Hindi Eligible"
             }
 
+    # E. Ambiguous / unmapped locations: Flag for manual review rather than silently dropping
     return {
-        "is_india_eligible": False,
-        "location_status": f"Ineligible Location: {location}",
+        "is_india_eligible": True,
+        "location_status": f"Flagged for Review: {location or 'Unspecified'}",
         "language_status": "English / Hindi Eligible"
     }
 
