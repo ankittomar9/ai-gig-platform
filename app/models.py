@@ -24,6 +24,9 @@ class JobItem(BaseModel):
 
 class UserProfile(BaseModel):
     name: str = "Candidate"
+    email: Optional[str] = "candidate@example.com"
+    phone: Optional[str] = "+91 XXXXX XXXXX"
+    linkedin: Optional[str] = "linkedin.com/in/candidate"
     skills: List[str] = []
     resume_text: str = ""
     target_rate: float = 20.0

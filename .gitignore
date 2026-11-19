@@ -23,3 +23,6 @@ data/user_resume.*
 # System files
 .DS_Store
 Thumbs.db
+
+# Sensitive Data Exports
+collab/data_export.json

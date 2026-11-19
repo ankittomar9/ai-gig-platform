@@ -75,9 +75,9 @@ My daily quality routine is straightforward:
 TAILORED ATS RESUME: AI Trainer & Java / Spring Boot Systems Engineer (India Remote) at Turing
 ==================================================
 
-ANKIT SINGH TOMAR
-Email: tomarankit78@gmail.com | Remote / Worldwide
-LinkedIn / GitHub: github.com/ankittomar9
+CANDIDATE NAME
+Email: candidate@example.com | Phone: +91 XXXXX XXXXX | Location: Remote / India
+LinkedIn: linkedin.com/in/candidate
 
 --------------------------------------------------
 PROFESSIONAL SUMMARY
@@ -177,9 +177,9 @@ My daily quality routine is straightforward:
 TAILORED ATS RESUME: AI Code Reviewer & Evaluation Engineer (Java, Spring, Python) at Alignerr
 ==================================================
 
-ANKIT SINGH TOMAR
-Email: tomarankit78@gmail.com | Remote / Worldwide
-LinkedIn / GitHub: github.com/ankittomar9
+CANDIDATE NAME
+Email: candidate@example.com | Phone: +91 XXXXX XXXXX | Location: Remote / India
+LinkedIn: linkedin.com/in/candidate
 
 --------------------------------------------------
 PROFESSIONAL SUMMARY
@@ -279,9 +279,9 @@ My daily quality routine is straightforward:
 TAILORED ATS RESUME: AI Software Engineer & Code Evaluator (Java, Python, C++) at Outlier
 ==================================================
 
-ANKIT SINGH TOMAR
-Email: tomarankit78@gmail.com | Remote / Worldwide
-LinkedIn / GitHub: github.com/ankittomar9
+CANDIDATE NAME
+Email: candidate@example.com | Phone: +91 XXXXX XXXXX | Location: Remote / India
+LinkedIn: linkedin.com/in/candidate
 
 --------------------------------------------------
 PROFESSIONAL SUMMARY
@@ -381,9 +381,9 @@ My daily quality routine is straightforward:
 TAILORED ATS RESUME: GenAI Evaluation Specialist & Prompt Engineer (India Remote) at Scale AI
 ==================================================
 
-ANKIT SINGH TOMAR
-Email: tomarankit78@gmail.com | Remote / Worldwide
-LinkedIn / GitHub: github.com/ankittomar9
+CANDIDATE NAME
+Email: candidate@example.com | Phone: +91 XXXXX XXXXX | Location: Remote / India
+LinkedIn: linkedin.com/in/candidate
 
 --------------------------------------------------
 PROFESSIONAL SUMMARY
@@ -483,9 +483,9 @@ My daily quality routine is straightforward:
 TAILORED ATS RESUME: Software Engineering & Code Evaluation Specialist at DataAnnotation
 ==================================================
 
-ANKIT SINGH TOMAR
-Email: tomarankit78@gmail.com | Remote / Worldwide
-LinkedIn / GitHub: github.com/ankittomar9
+CANDIDATE NAME
+Email: candidate@example.com | Phone: +91 XXXXX XXXXX | Location: Remote / India
+LinkedIn: linkedin.com/in/candidate
 
 --------------------------------------------------
 PROFESSIONAL SUMMARY

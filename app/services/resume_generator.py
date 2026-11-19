@@ -13,7 +13,10 @@ def generate_tailored_resume(job_id: str, profile: Dict[str, Any]) -> Dict[str, 
     tier = job.get("tier", "Mid-Tier ($15-$30)")
     job_desc = job.get("description", "")
     
-    candidate_name = profile.get("name", "Ankit Singh Tomar")
+    candidate_name = profile.get("name") or "Candidate Name"
+    email = profile.get("email") or "candidate@example.com"
+    phone = profile.get("phone") or "+91 XXXXX XXXXX"
+    linkedin = profile.get("linkedin") or "linkedin.com/in/candidate"
     skills = profile.get("skills", ["Java", "Python", "SQL", "Docker", "GCP", "Linux", "API"])
 
     # 1. Adapt Summary & Positioning based on the Job Category & Tier
@@ -67,8 +70,8 @@ TAILORED ATS RESUME: {title} at {company}
 ==================================================
 
 {candidate_name.upper()}
-Email: tomarankit78@gmail.com | Remote / Worldwide
-LinkedIn / GitHub: github.com/ankittomar9
+Email: {email} | Phone: {phone} | Location: Remote / India
+LinkedIn: {linkedin}
 
 --------------------------------------------------
 PROFESSIONAL SUMMARY

@@ -105,7 +105,7 @@ The table below lists every single job in the database that has passed both the 
     "Writing & RLHF",
     "Generalist"
   ],
-  "resume_summary": "ANKIT SINGH TOMAR\nPune / Indore, India  \u2022  +91 7999905480  \u2022  tomarankit78@gmail.com  \u2022  linkedin.com/in/ankit-singh-tomar  \u2022  github.com/ankittomar9\nPROFESSIONAL SUMMARY\nApplication Support & Production Systems Engineer with ~3 years enterprise experience at Cognizant managing 24/7 operational reli..."
+  "resume_summary": "CANDIDATE NAME\nIndia  \u2022  +91 XXXXX XXXXX  \u2022  candidate@example.com  \u2022  linkedin.com/in/candidate\nPROFESSIONAL SUMMARY\nApplication Support & Production Systems Engineer with ~3 years enterprise experience managing 24/7 operational reliability, incident response, and observability..."
 }
 ```
 
