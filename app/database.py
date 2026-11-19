@@ -60,6 +60,9 @@ def init_db():
     CREATE TABLE IF NOT EXISTS user_profile (
         id INTEGER PRIMARY KEY,
         name TEXT,
+        email TEXT DEFAULT 'candidate@example.com',
+        phone TEXT DEFAULT '+91 XXXXX XXXXX',
+        linkedin TEXT DEFAULT 'linkedin.com/in/candidate',
         skills TEXT,
         resume_text TEXT,
         target_rate REAL,
@@ -67,6 +70,15 @@ def init_db():
         preferred_categories TEXT
     )
     """)
+
+    cursor.execute("PRAGMA table_info(user_profile)")
+    u_cols = [c[1] for c in cursor.fetchall()]
+    if "email" not in u_cols:
+        cursor.execute("ALTER TABLE user_profile ADD COLUMN email TEXT DEFAULT 'candidate@example.com'")
+    if "phone" not in u_cols:
+        cursor.execute("ALTER TABLE user_profile ADD COLUMN phone TEXT DEFAULT '+91 XXXXX XXXXX'")
+    if "linkedin" not in u_cols:
+        cursor.execute("ALTER TABLE user_profile ADD COLUMN linkedin TEXT DEFAULT 'linkedin.com/in/candidate'")
 
     # Settings table
     cursor.execute("""
@@ -347,9 +359,15 @@ def get_user_profile() -> Dict[str, Any]:
         d = dict(row)
         d["skills"] = json.loads(d["skills"]) if d["skills"] else []
         d["preferred_categories"] = json.loads(d["preferred_categories"]) if d["preferred_categories"] else []
+        d.setdefault("email", "candidate@example.com")
+        d.setdefault("phone", "+91 XXXXX XXXXX")
+        d.setdefault("linkedin", "linkedin.com/in/candidate")
         return d
     return {
         "name": "Candidate",
+        "email": "candidate@example.com",
+        "phone": "+91 XXXXX XXXXX",
+        "linkedin": "linkedin.com/in/candidate",
         "skills": ["Python", "Machine Learning", "Prompt Engineering", "Data Analysis", "Writing"],
         "resume_text": "",
         "target_rate": 25.0,
@@ -363,6 +381,9 @@ def update_user_profile(data: Dict[str, Any]):
     cursor.execute("""
     UPDATE user_profile SET
         name = ?,
+        email = ?,
+        phone = ?,
+        linkedin = ?,
         skills = ?,
         resume_text = ?,
         target_rate = ?,
@@ -371,6 +392,9 @@ def update_user_profile(data: Dict[str, Any]):
     WHERE id = 1
     """, (
         data.get("name", "Candidate"),
+        data.get("email", "candidate@example.com"),
+        data.get("phone", "+91 XXXXX XXXXX"),
+        data.get("linkedin", "linkedin.com/in/candidate"),
         json.dumps(data.get("skills", [])),
         data.get("resume_text", ""),
         float(data.get("target_rate", 20.0)),
