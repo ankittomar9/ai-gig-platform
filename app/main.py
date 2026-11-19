@@ -48,6 +48,10 @@ app.add_middleware(
 # Mount static files
 app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 
+@app.get("/health")
+async def health_check():
+    return {"status": "ok", "app": "ai-gig-platform"}
+
 @app.get("/")
 async def root():
     index_file = STATIC_DIR / "index.html"
