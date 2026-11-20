@@ -323,3 +323,41 @@ $ git ls-files data/   → 0 files (directory absent from repo; Dockerfile:23 CO
 
 *Review complete. Methodology, evidence, and file:line references above allow any third party to re-verify every finding in under an hour: clone, install, run, reproduce Appendix B.*
 
+
+---
+
+## 8. Post-Remediation Verdict Delta (SPEC01 execution pass, 2026-11-20)
+
+> **Delta verdict: the P0/P1 fix pass landed and was independently re-audited (see [SPEC01-AUDIT-LEDGER.md](SPEC01-AUDIT-LEDGER.md)). Gates: 11 PASS / 3 CONDITIONAL / 0 FAIL.**
+> Baseline for this delta: the executor (Gemini/Antigravity) implemented work orders WO-1…WO-14 on 14 pre-assigned branches, merged `--no-ff` to `main` (`1695824`), with pasted evidence in `collab/gemini/`. All acceptance tests below were re-run independently by the reviewer on a fresh clone.
+
+| Finding | Original | Now | Basis |
+|---|---|---|---|
+| F1 silent word-count scoring | ❌ P0 | **✅ FIXED** | Invalid key → loud `[OFFLINE HEURISTIC EVALUATION]`, `evaluation_source` on every message, real API error surfaced in `fallback_reason` (reproduced: Google 400) |
+| F2 prompt never saw the job | ❌ P0 | **✅ FIXED** | JD + skills + category + last 4 pairs in prompt; prompts verified to differ by job; no source-code literals (transport capture) |
+| F3 PII in public repo | ❌ P0 | **⚠️ PARTIAL** | Phone/email/LinkedIn/employers purged, contact info profile-driven, export deleted+gitignored; **full name remains in 4 places** (`interview_packet.py:14`, `DATABASE_SNAPSHOT.md:90`, `VERIFIED_DOSSIER_SAMPLES.md:8,23`) → fixup-1 |
+| F4 Docker build broken | ❌ P0 | **✅ FIXED** *(receipt-verified)* | `COPY data/` removed, `env_file` optional, `/health` added; executor's fresh-clone build+run receipt pasted; independent Docker run still pending (no Docker in audit sandbox) |
+| F5 settings model reset | ❌ P1 | **✅ FIXED** | Reproduced 3-step; same-class defaults (`offline_mode`, `minimum_rate`) also fixed |
+| F6 model story mismatch | ❌ P1 | **✅ FIXED** | One story everywhere (`gemini-3.8-flash`); corroborated by Google retiring 2.5-flash for new users (404 receipt) |
+| F7 India gate gaps | ❌ P1 | **✅ FIXED** | Ahmedabad/Kolkata/Jaipur/Kochi/Remote-India eligible; unknown → flagged, not dropped |
+| F8 error strings as resume | ❌ P1 | **✅ FIXED** | 400 on corrupt/traversal/empty; valid upload persists real text |
+| F9 "40+ platforms" | ❌ P1 | **✅ FIXED** | Counts corrected everywhere (8 boards + 19 curated) |
+| F10 invented pay | ❌ P1 | **✅ FIXED** | 211/211 Greenhouse rows "Not listed"; direct posts labeled "(estimate)" |
+| F11 round-count mismatch | ⚠️ P2 | **✅ FIXED** | Docs now say 4 rounds + report card |
+| F12 fabricated 88 / `score\|\|8` | ⚠️ P2 | **✅ FIXED** | Null-safe; "—" for missing |
+| F13 CORS wildcard | ⚠️ P2 | **✅ FIXED** | Localhost-only; foreign preflight rejected |
+| F14 unsanitized filename | ⚠️ P2 | **✅ FIXED** | Validation + `Path(...).name` |
+| F15 key in URL | ⚠️ P2 | **✅ FIXED** | `x-goog-api-key` header |
+| F16 raw markdown | ⚠️ P2 | **✅ FIXED** | `renderSafeMarkdown`, escape-first |
+| F17 `high_score`=0 default | ⚠️ P2 | **➖ OPEN** | Not dispatched in SPEC01 (reviewer omission) |
+| F18 acronym casing | ⚠️ P2 | **✅ FIXED** | `SQL`/`API`/`AWS` preserved (reproduced) |
+| F19 short session ids | ⚠️ P2 | **➖ OPEN** | Not dispatched in SPEC01 (reviewer omission) |
+| F20 dead code | ⚠️ P2 | **✅ FIXED** | Removed; `groq_api_key` now settable (bonus) |
+| F21 unpinned deps | ⚠️ P2 | **✅ FIXED** | Exact pins |
+| F22 run.bat/README launch | ⚠️ P2 | **✅ FIXED** | `run.bat` clean, `run_dev.bat` split, paths relativized |
+
+**New issues found during re-audit** (both narrow, both prescribed fixups in the ledger):
+- **C-1** — real name remnants (F3 class), 4 locations → `privacy/pii-purge-fixup-1`
+- **C-2** — test suite not hermetic: 3/17 tests fail on a fresh clone (depend on scan data) and pytest writes `offline_mode='true'` + a test key into the real user DB → `tests/minimal-suite-fixup-1`
+
+**Suitability update (vs §5 of this report):** the interview-practice half is now **usable with trust**: AI vs heuristic scoring is always labeled, failures are loud, questions reference the actual job, settings stick, and pay data no longer fabricates. The gig-discovery half was already good and stays good. Remaining for the owner: a valid Gemini key on an available model, the two fixups above, and WO-15 (history purge) whenever the Operator decides.
