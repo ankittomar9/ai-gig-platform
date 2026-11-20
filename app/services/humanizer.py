@@ -45,7 +45,7 @@ def generate_humanized_pack(job: Dict[str, Any], profile: Dict[str, Any]) -> Dic
     title = job.get("title", "AI Trainer")
     category = job.get("category", "Generalist")
     tier = job.get("tier", "Mid-Tier ($15-$30)")
-    name = profile.get("name", "Ankit")
+    name = profile.get("name", "Applicant")
     skills = profile.get("skills", ["Linux", "Python", "SQL", "Docker", "Java"])
 
     # 1. Why Interested - Written in natural, grounded first-person voice

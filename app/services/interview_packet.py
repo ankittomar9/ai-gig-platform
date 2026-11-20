@@ -11,7 +11,7 @@ def generate_interview_packet(job_id: str, profile: Dict[str, Any]) -> Dict[str,
     company = job.get("company", "Company")
     category = job.get("category", "Generalist")
     tier = job.get("tier", "Mid-Tier ($15-$30)")
-    candidate_name = profile.get("name", "Ankit Singh Tomar")
+    candidate_name = profile.get("name", "Applicant")
     candidate_skills = profile.get("skills", ["Java", "Spring Boot", "SQL", "Docker", "GCP", "Linux", "API"])
     skills_str = ", ".join(candidate_skills[:5])
 

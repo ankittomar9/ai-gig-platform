@@ -4,7 +4,7 @@ let activeIndiaOnly = true; // Default: Only show gigs applicable from India in 
 let activeTier = 'all';
 let activeCategory = 'all';
 let activeCompany = 'all';
-let activeExp = 3; // Default: show gigs matching Ankit's <= 3 years experience!
+let activeExp = 3; // Default: show gigs matching candidate's <= 3 years experience!
 let allCompanies = [];
 let currentSession = null;
 let currentJobForInterview = null;
