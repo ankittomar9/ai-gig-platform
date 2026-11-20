@@ -87,7 +87,7 @@ The table below lists every single job in the database that has passed both the 
 
 ```json
 {
-  "name": "Ankit Singh Tomar",
+  "name": "Applicant",
   "experience_years": 2,
   "target_rate": 25.0,
   "skills": [

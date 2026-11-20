@@ -10,7 +10,7 @@ The platform operates an ecosystem of specialized agents designed to automate di
 
 ```
                               +---------------------------------------+
-                              |      Candidate (Ankit Singh Tomar)    |
+                              |          Candidate (Applicant)        |
                               +-------------------+-------------------+
                                                   |
                          +------------------------+------------------------+
