@@ -22,4 +22,6 @@
 | WO-12 | Score & UI integrity (F12, F16) | VERIFIED | `interview/score-integrity-fix` | `f114cb2` | `collab/gemini/SPEC01-WO-12-REPORT.md` |
 | WO-13 | Code cleanup, title cap, dependency pins (F18, F20, F21) | VERIFIED | `cleanup/dead-code-and-pins-fix` | `2b7ef80` | `collab/gemini/SPEC01-WO-13-REPORT.md` |
 | WO-14 | Minimal test suite (pytest) | VERIFIED | `tests/minimal-suite-1` | `0397251` | `collab/gemini/SPEC01-WO-14-REPORT.md` |
+| Fixup C-1 | Purge real name remnants (G-5 Condition) | VERIFIED | `privacy/pii-purge-fixup-1` | `b944231` | `collab/gemini/SPEC01-FIXUP-1-REPORT.md` |
+| Fixup C-2 | Test suite hermeticity & DB isolation (G-14 Condition) | VERIFIED | `tests/minimal-suite-fixup-1` | `227d676` | `collab/gemini/SPEC01-FIXUP-2-REPORT.md` |
 | WO-15 | History rewrite PII purge (Operator-gated) | GATED | `privacy/history-purge-1` | - | `collab/gemini/SPEC01-WO-15-REPORT.md` |
